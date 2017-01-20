@@ -12,6 +12,9 @@ import (
 
 type Instance struct {
 	Id string
+	State uint
+	LaunchTime string
+	Type string
 }
 
 type Reservation struct {
@@ -23,15 +26,38 @@ type EC2 struct {
 	Reservations []Reservation
 }
 
-type Cloud struct {
+type Stats struct {
 	Service EC2
 }
 
-func getInstances(reservation int, instances []*ec2.Instance) {
-	fmt.Println("reservation: ", reservation, " instances: ", len(instances))
+func (s Stats) getState(code int64) string {
+	switch code {
+		case 0:
+			return "pending"
+		case 16:
+			return "running"
+		case 32:
+			return "shutting-down"
+		case 48:
+			return "terminated"
+		case 64:
+			return "stopping"
+		case 80:
+			return "stopped"
+	}
+	return ""
 }
 
-func listInstances(svc ec2iface.EC2API) int {
+func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
+	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
+	for _, instance := range instances {
+		fmt.Print("id: ", instance.InstanceId)
+		fmt.Print(" | LaunchTime: ", instance.LaunchTime)
+		fmt.Println(" | State: ", s.getState(*instance.State.Code))
+	}
+}
+
+func (s Stats) listInstances(svc ec2iface.EC2API) int {
 	count := 0
 
 	// Call the DescribeInstances Operation
@@ -44,7 +70,7 @@ func listInstances(svc ec2iface.EC2API) int {
 	reservation := 1
 	for _, res := range resp.Reservations {
 		//fmt.Println("\n\n** instances: ", res.Instances)
-		getInstances(reservation, res.Instances)
+		s.getInstances(reservation, res.Instances)
 		count += len(res.Instances)
 		reservation += 1
 	}
@@ -60,14 +86,14 @@ func main() {
 	var wg sync.WaitGroup
 	nums := make(chan int)
 	regions := []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-west-2", "ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "sa-east-1"}
-	srv := &Cloud{EC2{Regions: regions}}
+	srv := &Stats{EC2{Regions: regions}}
 	for i := range srv.Service.Regions {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 			region := srv.Service.Regions[i]
 			svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
-			nm := listInstances(svc)
+			nm := srv.listInstances(svc)
 			fmt.Println("Region Name: ", region, " | Number of instances: ", nm)
 			nums <- nm
 		}(i)
