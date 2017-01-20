@@ -48,44 +48,9 @@ func (s Stats) getState(code int64) string {
 	return ""
 }
 
-func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
-	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
-	for _, instance := range instances {
-		fmt.Print("id: ", instance.InstanceId)
-		fmt.Print(" | LaunchTime: ", instance.LaunchTime)
-		fmt.Println(" | State: ", s.getState(*instance.State.Code))
-	}
-}
-
-func (s Stats) listInstances(svc ec2iface.EC2API) int {
-	count := 0
-
-	// Call the DescribeInstances Operation
-	resp, err := svc.DescribeInstances(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	// resp has all of the response data, pull out instance IDs:
-	reservation := 1
-	for _, res := range resp.Reservations {
-		//fmt.Println("\n\n** instances: ", res.Instances)
-		s.getInstances(reservation, res.Instances)
-		count += len(res.Instances)
-		reservation += 1
-	}
-	return count
-}
-
-func main() {
-	sess, err := session.NewSession()
-	if err != nil {
-		panic(err)
-	}
-
+func New(sess *session.Session, regions []string) *Stats {
 	var wg sync.WaitGroup
 	nums := make(chan int)
-	regions := []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-west-2", "ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "sa-east-1"}
 	srv := &Stats{EC2{Regions: regions}}
 	for i := range srv.Service.Regions {
 		wg.Add(1)
@@ -107,4 +72,50 @@ func main() {
 		sum += num
 	}
 	fmt.Println("done\ntotal instances: ", sum)
+	return srv
+}
+
+func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
+	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
+	for _, instance := range instances {
+		fmt.Print("id: ", *instance.InstanceId)
+		// fmt.Print(" | LaunchTime: ", instance.LaunchTime)
+		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
+		fmt.Println(" | KeyName: ", *instance.KeyName)
+		// fmt.Println(" | State: ", s.getState(*instance.State.Code))
+	}
+}
+
+func (s Stats) listInstances(svc ec2iface.EC2API) int {
+	count := 0
+
+	// Call the DescribeInstances Operation
+	resp, err := svc.DescribeInstances(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// resp has all of the response data, pull out instance IDs:
+	reservation := 1
+	for _, res := range resp.Reservations {
+		//fmt.Println("\n\n** instances: ", res.Instances)
+		// fmt.Println(res)
+		fmt.Print("Owner: ", *res.OwnerId)
+		fmt.Println(" | ReservationId: ", *res.ReservationId)
+		s.getInstances(reservation, res.Instances)
+		count += len(res.Instances)
+		reservation += 1
+	}
+	return count
+}
+
+func main() {
+	sess, err := session.NewSession()
+	if err != nil {
+		panic(err)
+	}
+
+	regions := []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-west-2", "ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "sa-east-1"}
+
+	_ = New(sess, regions)
 }
