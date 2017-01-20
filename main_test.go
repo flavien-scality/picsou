@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"testing"
 )
 
 type mockEC2Client struct {
@@ -13,9 +13,9 @@ type mockEC2Client struct {
 func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
 	return &ec2.DescribeInstancesOutput{
 		Reservations: []*ec2.Reservation{
-			{ Instances: []*ec2.Instance{
-				{ "salut", "ca" },
-			}, },
+			{Instances: []*ec2.Instance{
+				{"salut", "ca"},
+			}},
 		},
 	}
 }
