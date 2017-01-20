@@ -1,0 +1,23 @@
+general:
+  branches:
+
+machine:
+  pre:
+    - sudo rm -rf /usr/local/go
+    - curl -L https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
+    - go get -u github.com/golang/lint/golint
+
+  environment:
+    PATH: "/usr/local/go/bin:/usr/local/go_workspace/bin:~/.g /home/ubuntu/.go_project_workspace/bin:${PATH}"
+    GOPATH: "${HOME}/.go_workspace:/usr/local/go_workspace:${HOME}/.go_project"
+
+test:
+  post:
+    - mkdir $CIRCLE_ARTIFACTS/coverage
+    - mv cover.out $CIRCLE_ARTIFACTS/coverage
+    - mv coverage.html $CIRCLE_ARTIFACTS/coverage
+
+  override:
+    - golint 
+    - go test -v -coverprofile=cover.out ./...
+    - go tool cover -html=cover.out -o coverage.html
