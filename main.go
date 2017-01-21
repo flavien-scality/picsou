@@ -26,23 +26,45 @@ var regions = []string{
 	"sa-east-1",
 }
 
+// Instance Represente a minimuse the informations needed from ec2.Instance
+//
+// For more documentation see:
+// https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/Instance
 type Instance struct {
-	Id         string
-	State      uint
+	// Unique id of the ec2.Instance
+	ID string
+	// Curremt state of the ec2.Instance
+	State uint
+	// Time when the instance have been lanch
 	LaunchTime string
-	Type       string
+	// Type of the ec2 instance
+	Type string
 }
 
+// Reservation is a collection of EC2 instances started as part of the same launch request.
+//
+// For more documentation see:
+// http://docs.aws.amazon.com/general/latest/gr/glos-chap.html#reservation
 type Reservation struct {
+	// Instances started
 	Instances []Instance
 }
 
+// EC2 represente a collection of Regoins and reservations from aws-ec2
+//
+// For more documentation see:
+// https://aws.amazon.com/ec2/
 type EC2 struct {
-	Regions      []string
+	// Array of region of the reservations
+	Regions []string
+	// Array of reservations for the ec2 account
 	Reservations []Reservation
 }
 
+// Stats represente the differents statistics for the differents reservations
+// and instances from the ec2 account
 type Stats struct {
+	// Differents reservations and instances
 	Service EC2
 }
 
@@ -64,6 +86,8 @@ func (s Stats) getState(code int64) string {
 	return ""
 }
 
+// New will get from aws all the reservations and then the instances
+// from that informations the function will compute the appropriate stats
 func New(sess *session.Session, regions []string) *Stats {
 	var wg sync.WaitGroup
 	nums := make(chan int)
@@ -120,7 +144,7 @@ func (s Stats) listInstances(svc ec2iface.EC2API) int {
 		fmt.Println(" | ReservationId: ", *res.ReservationId)
 		s.getInstances(reservation, res.Instances)
 		count += len(res.Instances)
-		reservation += 1
+		reservation++
 	}
 	return count
 }
