@@ -10,11 +10,27 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
+var regions = []string{
+	"us-east-1",
+	"us-east-2",
+	"us-west-1",
+	"us-west-2",
+	"ca-central-1",
+	"eu-west-1",
+	"eu-west-2",
+	"ap-northeast-1",
+	"ap-northeast-2",
+	"ap-southeast-1",
+	"ap-southeast-2",
+	"ap-south-1",
+	"sa-east-1",
+}
+
 type Instance struct {
-	Id string
-	State uint
+	Id         string
+	State      uint
 	LaunchTime string
-	Type string
+	Type       string
 }
 
 type Reservation struct {
@@ -22,7 +38,7 @@ type Reservation struct {
 }
 
 type EC2 struct {
-	Regions []string
+	Regions      []string
 	Reservations []Reservation
 }
 
@@ -32,18 +48,18 @@ type Stats struct {
 
 func (s Stats) getState(code int64) string {
 	switch code {
-		case 0:
-			return "pending"
-		case 16:
-			return "running"
-		case 32:
-			return "shutting-down"
-		case 48:
-			return "terminated"
-		case 64:
-			return "stopping"
-		case 80:
-			return "stopped"
+	case 0:
+		return "pending"
+	case 16:
+		return "running"
+	case 32:
+		return "shutting-down"
+	case 48:
+		return "terminated"
+	case 64:
+		return "stopping"
+	case 80:
+		return "stopped"
 	}
 	return ""
 }
@@ -114,8 +130,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	regions := []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-west-2", "ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "sa-east-1"}
-
 	_ = New(sess, regions)
 }
