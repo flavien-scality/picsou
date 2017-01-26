@@ -68,7 +68,7 @@ type Stats struct {
 	Service EC2
 }
 
-func (s Stats) getState(code int64) string {
+func GetState(code int64) string {
 	switch code {
 	case 0:
 		return "pending"
@@ -122,7 +122,7 @@ func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
 		// fmt.Print(" | LaunchTime: ", instance.LaunchTime)
 		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
 		fmt.Println(" | KeyName: ", *instance.KeyName)
-		// fmt.Println(" | State: ", s.getState(*instance.State.Code))
+		// fmt.Println(" | State: ", s.GetState(*instance.State.Code))
 	}
 }
 
