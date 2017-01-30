@@ -18,4 +18,31 @@
       sha256 = "01qaz781cvrv3h1428xqq8knf5ahdcj93m5k9dnivg2hcrlnqibj";
     };
   }
+  {
+    goPackagePath = "github.com/smartystreets/goconvey";
+    fetch = {
+      type = "git";
+      url = "https://github.com/smartystreets/goconvey";
+      rev = "3bd662eac601ad6436e64776af2e112069eb2edc";
+      sha256 = "0zj7n92pp6lbmb28bww32n73jivningbp1fzzdnzc3yiv1a551s6";
+    };
+  }
+  {
+    goPackagePath = "github.com/jtolds/gls";
+    fetch = {
+      type = "git";
+      url = "https://github.com/jtolds/gls";
+      rev = "bb0351aa7eb6f322f32667d51375f26a2bca6628";
+      sha256 = "09wd68ms4zp1fg7a540h559ls6vjgvh96w3hqgamilz5wggzqivh";
+    };
+  }
+  {
+    goPackagePath = "github.com/smartystreets/assertions";
+    fetch = {
+      type = "git";
+      url = "https://github.com/smartystreets/assertions";
+      rev = "26acb9229f421449ac63d014995b282d59261a8b";
+      sha256 = "0nd68177yag49akdz7q9yydar46skq693jyq1f83l9vhgbwhwqwb";
+    };
+  }
 ]
