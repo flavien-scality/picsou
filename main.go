@@ -129,8 +129,8 @@ func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
 		// 	instance.LaunchTime.Minute(),
 		// )
 		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
-		fmt.Println(" | KeyName: ", *instance.KeyName)
-		// fmt.Println(" | State: ", s.GetState(*instance.State.Code))
+		// fmt.Println(" | KeyName: ", *instance.KeyName)
+		// fmt.Println(" | State: ", s.getState(*instance.State.Code))
 	}
 }
 
@@ -148,9 +148,9 @@ func (s Stats) listInstances(svc ec2iface.EC2API) int {
 	for _, res := range resp.Reservations {
 		//fmt.Println("\n\n** instances: ", res.Instances)
 		// fmt.Println(res)
-		fmt.Print("Owner: ", *res.OwnerId)
-		fmt.Println(" | ReservationId: ", *res.ReservationId)
-		s.getInstances(reservation, res.Instances)
+		// fmt.Print("Owner: ", *res.OwnerId)
+		// fmt.Println(" | ReservationId: ", *res.ReservationId)
+		// s.getInstances(reservation, res.Instances)
 		count += len(res.Instances)
 		reservation++
 	}

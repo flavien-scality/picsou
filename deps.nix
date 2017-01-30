@@ -9,4 +9,13 @@
       sha256 = "0zz0cbrkcvj76pch747n9vrg7bi3jbx5896migcacyy8vazskbkv";
     };
   }
+  {
+    goPackagePath = "github.com/stretchr/testify";
+    fetch = {
+      type = "git";
+      url = "https://github.com/stretchr/testify";
+      rev = "2402e8e7a02fc811447d11f881aa9746cdc57983";
+      sha256 = "01qaz781cvrv3h1428xqq8knf5ahdcj93m5k9dnivg2hcrlnqibj";
+    };
+  }
 ]
