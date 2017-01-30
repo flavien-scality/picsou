@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -36,7 +37,7 @@ type Instance struct {
 	// Curremt state of the ec2.Instance
 	State uint
 	// Time when the instance have been lanch
-	LaunchTime string
+	LaunchTime time.Time
 	// Type of the ec2 instance
 	Type string
 }
@@ -117,9 +118,16 @@ func New(sess *session.Session, regions []string) *Stats {
 
 func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
 	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
+	t := time.Now()
 	for _, instance := range instances {
 		fmt.Print("id: ", *instance.InstanceId)
-		// fmt.Print(" | LaunchTime: ", instance.LaunchTime)
+		fmt.Print(" | deltatime: ", t.Sub(*instance.LaunchTime))
+		// fmt.Print(
+		// 	" | LaunchTime: ",
+		// 	instance.LaunchTime.Hour(),
+		// 	":",
+		// 	instance.LaunchTime.Minute(),
+		// )
 		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
 		fmt.Println(" | KeyName: ", *instance.KeyName)
 		// fmt.Println(" | State: ", s.GetState(*instance.State.Code))
