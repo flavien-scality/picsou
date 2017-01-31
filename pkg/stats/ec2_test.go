@@ -7,19 +7,20 @@ import (
   "errors"
   "strconv"
   "testing"
-  //"github.com/stretchr/testify/assert"
 )
 
-var SHOULD_PANIC bool
+var FuncShouldPanic bool
 
 type mockEC2Client struct {
   ec2iface.EC2API
 }
 
+var errDescribe = errors.New("describeError")
+
 func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
   // Handle should panic or not
-  err := errors.New("toto!")
-  if !SHOULD_PANIC {
+  err := errDescribe
+  if !FuncShouldPanic {
     err = nil
   }
   return &ec2.DescribeInstancesOutput{
@@ -41,15 +42,14 @@ func TestListingInstances(t *testing.T) {
 
   Convey("Testing instances listing", t, func() {
     Convey("Should be equal to '2'", func() {
-      SHOULD_PANIC = false
+      FuncShouldPanic = false
       So(srv.listInstances(mockSvc), ShouldEqual, 2)
     })
     Convey("Should panic when aws API call fails", func() {
-      SHOULD_PANIC = true
-      So(func () { srv.listInstances(mockSvc) }, ShouldPanic)
+      FuncShouldPanic = true
+      So(func () { srv.listInstances(mockSvc) }, ShouldPanicWith, errDescribe)
     })
   })
-  // assert.Equal(t, 2, res, "The instances' count should be the same")
 }
 
 

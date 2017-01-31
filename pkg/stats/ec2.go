@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
+// Regions defines all amazon regions to check for ec2 usage
 var Regions = []string{
 	"us-east-1",
 	"us-east-2",
@@ -69,6 +70,7 @@ type Stats struct {
 	Service EC2
 }
 
+// GetState match the status code with the representing status string
 func GetState(code int64) string {
 	switch code {
 	case 0:
