@@ -19,5 +19,5 @@ test:
 
   override:
     - golint 
-    - go test -v -coverprofile=cover.txt ./...
-    - go tool cover -html=cover.txt -o coverage.html
+    - ./test.sh
+    - go tool cover -html=coverage.txt -o coverage.html

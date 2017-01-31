@@ -51,7 +51,7 @@ type Reservation struct {
 	Instances []Instance
 }
 
-// EC2 represente a collection of Regoins and reservations from aws-ec2
+// EC2 represente a collection of Regions and reservations from aws-ec2
 //
 // For more documentation see:
 // https://aws.amazon.com/ec2/
