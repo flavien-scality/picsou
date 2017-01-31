@@ -1,20 +1,27 @@
-package main
+package stats
 
 import (
   . "github.com/smartystreets/goconvey/convey"
   "github.com/aws/aws-sdk-go/service/ec2"
   "github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+  "errors"
   "strconv"
   "testing"
-  "github.com/stretchr/testify/assert"
+  //"github.com/stretchr/testify/assert"
 )
 
+var SHOULD_PANIC bool
 
 type mockEC2Client struct {
   ec2iface.EC2API
 }
 
 func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+  // Handle should panic or not
+  err := errors.New("toto!")
+  if !SHOULD_PANIC {
+    err = nil
+  }
   return &ec2.DescribeInstancesOutput{
     Reservations: []*ec2.Reservation{
       {
@@ -24,16 +31,25 @@ func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*e
         },
       },
     },
-  }, nil
+  }, err
 }
 
 func TestListingInstances(t *testing.T) {
   // Setup test
   mockSvc := &mockEC2Client{}
-
   srv := Stats{Service: EC2{Regions: []string{"us-west-1",},},}
-  res := srv.listInstances(mockSvc)
-  assert.Equal(t, 2, res, "The instances' count should be the same")
+
+  Convey("Testing instances listing", t, func() {
+    Convey("Should be equal to '2'", func() {
+      SHOULD_PANIC = false
+      So(srv.listInstances(mockSvc), ShouldEqual, 2)
+    })
+    Convey("Should panic when aws API call fails", func() {
+      SHOULD_PANIC = true
+      So(func () { srv.listInstances(mockSvc) }, ShouldPanic)
+    })
+  })
+  // assert.Equal(t, 2, res, "The instances' count should be the same")
 }
 
 
@@ -43,7 +59,7 @@ func testGetState(k int64, expected string) {
 	})
 }
 
-func TestGetState(t *testing.T) {
+func TestGetStateMapping(t *testing.T) {
 	maps := make(map[int64]string)
 	maps[0] = "pending"
 	maps[16] = "running"
