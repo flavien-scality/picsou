@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/scality/Picsou/pkg/stats"
+	"github.com/scality/picsou/pkg/stats"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
