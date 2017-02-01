@@ -1,5 +1,5 @@
 BINARIES ?=	picsou
-GODIR ?= $GOPATH/github.com/scality/picsou
+GODIR ?= $GOPATH/src/github.com/scality/picsou
 
 PKG_BASE_DIR ?=	./pkg
 CONVEY_PORT ?=	9042
