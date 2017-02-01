@@ -14,10 +14,9 @@ machine:
 test:
   post:
     - mkdir $CIRCLE_ARTIFACTS/coverage
-    - mv cover.out $CIRCLE_ARTIFACTS/coverage
+    - mv coverage.txt $CIRCLE_ARTIFACTS/coverage
     - mv coverage.html $CIRCLE_ARTIFACTS/coverage
 
   override:
-    - golint 
-    - go test -v -coverprofile=cover.out ./...
-    - go tool cover -html=cover.out -o coverage.html
+    - golint ./...
+    - ./test.sh
