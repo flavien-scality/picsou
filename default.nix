@@ -1,7 +1,7 @@
 with import <nixpkgs> { };
 
 let
-  buildDeps = with pkgs; [ stdenv buildGoPackage fetchgit ];
+  buildDeps = with pkgs; [ stdenv buildGoPackage fetchgit gnumake ];
 in
 
 buildGoPackage rec {
