@@ -45,4 +45,13 @@
       sha256 = "0nd68177yag49akdz7q9yydar46skq693jyq1f83l9vhgbwhwqwb";
     };
   }
+  {
+    goPackagePath = "github.com/golang/lint";
+    fetch = {
+        type = "git";
+        url = "https://github.com/golang/lint";
+        rev = "5295072ea38460cda1ff822cf6d30a7bf64329bd";
+        sha256 = "1q21ll8ip9zgdc9vqmad96dv39swch2zwkar840yk9ydbv46sbyp";
+    };
+  }
 ]
