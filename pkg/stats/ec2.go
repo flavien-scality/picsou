@@ -101,8 +101,8 @@ func New(sess *session.Session, regions []string) *Stats {
 			defer wg.Done()
 			region := srv.Service.Regions[i]
 			svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
-			nm := srv.listInstances(svc)
-			fmt.Println("Region Name: ", region, " | Number of instances: ", nm)
+			rn, nm := srv.listInstances(svc)
+			fmt.Println("Region Name: ", region, " | Number of instances: ", rn, "/", nm)
 			nums <- nm
 		}(i)
 	}
@@ -118,12 +118,13 @@ func New(sess *session.Session, regions []string) *Stats {
 	return srv
 }
 
-func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
+func (s Stats) getInstances(reservation int, instances []*ec2.Instance) int {
 	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
-	t := time.Now()
+	running := 0
+	// t := time.Now()
 	for _, instance := range instances {
-		fmt.Print("id: ", *instance.InstanceId)
-		fmt.Print(" | deltatime: ", t.Sub(*instance.LaunchTime))
+		// fmt.Print("id: ", *instance.InstanceId)
+		// fmt.Print(" | deltatime: ", t.Sub(*instance.LaunchTime))
 		// fmt.Print(
 		// 	" | LaunchTime: ",
 		// 	instance.LaunchTime.Hour(),
@@ -132,11 +133,16 @@ func (s Stats) getInstances(reservation int, instances []*ec2.Instance) {
 		// )
 		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
 		// fmt.Println(" | KeyName: ", *instance.KeyName)
-		// fmt.Println(" | State: ", s.GetState(*instance.State.Code))
+		// fmt.Println(" | State: ", GetState(*instance.State.Code))
+		if GetState(*instance.State.Code) == "running" {
+			running += 1
+		}
 	}
+	return running
 }
 
-func (s Stats) listInstances(svc ec2iface.EC2API) int {
+func (s Stats) listInstances(svc ec2iface.EC2API) (int, int) {
+	running := 0
 	count := 0
 
 	// Call the DescribeInstances Operation
@@ -148,13 +154,17 @@ func (s Stats) listInstances(svc ec2iface.EC2API) int {
 	// resp has all of the response data, pull out instance IDs:
 	reservation := 1
 	for _, res := range resp.Reservations {
-		//fmt.Println("\n\n** instances: ", res.Instances)
+		// fmt.Println("\n\n** instances: ", res.Instances)
 		// fmt.Println(res)
 		// fmt.Print("Owner: ", *res.OwnerId)
 		// fmt.Println(" | ReservationId: ", *res.ReservationId)
-		// s.getInstances(reservation, res.Instances)
-		count += len(res.Instances)
+		runs := s.getInstances(reservation, res.Instances)
+		ttl := len(res.Instances)
+		count += ttl
+		running += runs
+		// If runs != ttl || runs != 0 then send warning incomplete reservation shutdown
+		fmt.Println("Reservation: ", reservation, " | instances: ", runs, "/", ttl)
 		reservation++
 	}
-	return count
+	return running, count
 }
