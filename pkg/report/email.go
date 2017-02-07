@@ -1,4 +1,4 @@
-package main
+package report
 
 import (
 	"bytes"
@@ -7,23 +7,14 @@ import (
 	"net/smtp"
 )
 
-var auth smtp.Auth
+type TemplateData struct {
+	Name string
+	URL string
+}
 
-func main() {
-	auth = smtp.PlainAuth("", "dhanush@geektrust.in", "password", "smtp.gmail.com")
-	templateData := struct {
-		Name string
-		URL  string
-	}{
-		Name: "Dhanush",
-		URL:  "http://geektrust.in",
-	}
-	r := NewRequest([]string{"junk@junk.com"}, "Hello Junk!", "Hello, World!")
-	err := r.ParseTemplate("template.html", templateData)
-	if err != nil {
-		ok, _ := r.SendEmail()
-		fmt.Println(ok)
-	}
+type Template struct {
+	filename string
+	data interface{}
 }
 
 //Request struct
@@ -32,38 +23,44 @@ type Request struct {
 	to      []string
 	subject string
 	body    string
+	template *Template
 }
 
-func NewRequest(to []string, subject, body string) *Request {
+func NewRequest(to []string, subject, body, templatePath string, templateData *TemplateData) *Request {
 	return &Request{
 		to:      to,
 		subject: subject,
 		body:    body,
+		template: &Template{
+			filename: templatePath,
+			data: templateData,
+		},
 	}
 }
 
-func (r *Request) SendEmail() (bool, error) {
-	mime := "MIME-version: 1.0;\nContent-Type: text/plain; charset=\"UTF-8\";\n\n"
-	subject := "Subject: " + r.subject + "!\n"
-	msg := []byte(subject + mime + "\n" + r.body)
+func (r *Request) SendEmail() *Request {
+	from := "From: maxime.vaude@gmail.com\r\n"
+	to := "To: " + r.to[0] + "\r\n"
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n"
+	subject := "Subject: " + r.subject + "\r\n\r\n"
+	msg := []byte(from + to + mime + subject + "\n" + r.body + "\r\n")
 	addr := "smtp.gmail.com:587"
 
-	if err := smtp.SendMail(addr, auth, "dhanush@geektrust.in", r.to, msg); err != nil {
-		return false, err
+	if err := smtp.SendMail(addr, auth, "maxime.vaude@gmail.com", r.to, msg); err != nil {
+		return nil
 	}
-	return true, nil
+	return r
 }
 
-func (r *Request) ParseTemplate(templateFileName string, data interface{}) error {
-	t, err := template.ParseFiles(templateFileName)
+func (r *Request) ParseTemplate() *Request {
+	t, err := template.ParseFiles(r.template.filename)
 	if err != nil {
-		return err
+		return nil
 	}
 	buf := new(bytes.Buffer)
-	if err = t.Execute(buf, data); err != nil {
-		return err
+	if err = t.Execute(buf, r.template.data); err != nil {
+		return nil
 	}
 	r.body = buf.String()
-	return nil
+	return r
 }
-

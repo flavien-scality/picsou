@@ -10,7 +10,7 @@ PACKAGES :=	$(shell go list ./pkg/...)
 GO ?=		$(GOENV) go
 
 
-all:	deps build
+all:	build
 
 
 .PHONY: build

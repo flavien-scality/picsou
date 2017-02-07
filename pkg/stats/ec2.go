@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 	"time"
@@ -68,6 +69,7 @@ type EC2 struct {
 type Stats struct {
 	// Differents reservations and instances
 	Service EC2
+	data bytes.Buffer
 }
 
 // GetState match the status code with the representing status string
@@ -94,7 +96,7 @@ func GetState(code int64) string {
 func New(sess *session.Session, regions []string) *Stats {
 	var wg sync.WaitGroup
 	nums := make(chan int)
-	srv := &Stats{EC2{Regions: regions}}
+	srv := &Stats{Service: EC2{Regions: regions}, data: bytes.NewBufferString("")}
 	for i := range srv.Service.Regions {
 		wg.Add(1)
 		go func(i int) {
@@ -114,7 +116,7 @@ func New(sess *session.Session, regions []string) *Stats {
 	for num := range nums {
 		sum += num
 	}
-	fmt.Println("done\ntotal instances: ", sum)
+	svc.data.WriteString("Total instances: ", sum)
 	return srv
 }
 
@@ -163,7 +165,7 @@ func (s Stats) listInstances(svc ec2iface.EC2API) (int, int) {
 		count += ttl
 		running += runs
 		// If runs != ttl || runs != 0 then send warning incomplete reservation shutdown
-		fmt.Println("Reservation: ", reservation, " | instances: ", runs, "/", ttl)
+		s.data.WriteString("Reservation: ", reservation, " | instances: ", runs, "/", ttl)
 		reservation++
 	}
 	return running, count
