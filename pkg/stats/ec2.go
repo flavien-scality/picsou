@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"bytes"
 	"fmt"
 	"sync"
 	"time"
@@ -69,7 +68,6 @@ type EC2 struct {
 type Stats struct {
 	// Differents reservations and instances
 	Service EC2
-	Res bytes.Buffer
 }
 
 // GetState match the status code with the representing status string
@@ -96,7 +94,7 @@ func GetState(code int64) string {
 func New(sess *session.Session, regions []string) *Stats {
 	var wg sync.WaitGroup
 	nums := make(chan int)
-	srv := &Stats{Service: EC2{Regions: regions}, Res: *bytes.NewBufferString("")}
+	srv := &Stats{EC2{Regions: regions}}
 	for i := range srv.Service.Regions {
 		wg.Add(1)
 		go func(i int) {
@@ -104,7 +102,7 @@ func New(sess *session.Session, regions []string) *Stats {
 			region := srv.Service.Regions[i]
 			svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
 			rn, nm := srv.listInstances(svc)
-			srv.Res.WriteString(fmt.Sprintf("Region Name: %s | Number of instances: %d/%d\n", region, rn, nm))
+			fmt.Println("Region Name: ", region, " | Number of instances: ", rn, "/", nm)
 			nums <- nm
 		}(i)
 	}
@@ -165,7 +163,7 @@ func (s Stats) listInstances(svc ec2iface.EC2API) (int, int) {
 		count += ttl
 		running += runs
 		// If runs != ttl || runs != 0 then send warning incomplete reservation shutdown
-		s.Res.WriteString(fmt.Sprintf("Reservation: %s | instances: %d/%d\n", reservation, runs, ttl))
+		fmt.Println("Reservation: ", reservation, " | instances: ", runs, "/", ttl)
 		reservation++
 	}
 	return running, count
