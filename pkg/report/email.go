@@ -19,6 +19,7 @@ type Template struct {
 
 //Request struct
 type Request struct {
+	auth    *smtp.Auth
 	from    string
 	to      []string
 	subject string
@@ -26,8 +27,9 @@ type Request struct {
 	template *Template
 }
 
-func NewRequest(to []string, subject, body, templatePath string, templateData *TemplateData) *Request {
+func NewRequest(auth *smtp.Auth, to []string, subject, body, templatePath string, templateData *TemplateData) *Request {
 	return &Request{
+		auth: auth,
 		to:      to,
 		subject: subject,
 		body:    body,
@@ -46,7 +48,8 @@ func (r *Request) SendEmail() *Request {
 	msg := []byte(from + to + mime + subject + "\n" + r.body + "\r\n")
 	addr := "smtp.gmail.com:587"
 
-	if err := smtp.SendMail(addr, auth, "maxime.vaude@gmail.com", r.to, msg); err != nil {
+	if err := smtp.SendMail(addr, *r.auth, "maxime.vaude@gmail.com", r.to, msg); err != nil {
+		fmt.Println("pb during SendMail: ", err)
 		return nil
 	}
 	return r
@@ -55,10 +58,12 @@ func (r *Request) SendEmail() *Request {
 func (r *Request) ParseTemplate() *Request {
 	t, err := template.ParseFiles(r.template.filename)
 	if err != nil {
+		fmt.Println("pb during parse template")
 		return nil
 	}
 	buf := new(bytes.Buffer)
 	if err = t.Execute(buf, r.template.data); err != nil {
+		fmt.Println("pb during execute template")
 		return nil
 	}
 	r.body = buf.String()

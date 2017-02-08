@@ -11,4 +11,8 @@ buildGoPackage rec {
   goPackagePath = "github.com/scality/picsou";
 
   goDeps = with buildDeps; ./deps.nix;
+
+  extraCmds = ''
+    export GOPATH=~/go:$GOPATH
+  '';
 }

@@ -69,7 +69,7 @@ type EC2 struct {
 type Stats struct {
 	// Differents reservations and instances
 	Service EC2
-	data bytes.Buffer
+	Data *bytes.Buffer
 }
 
 // GetState match the status code with the representing status string
@@ -96,7 +96,7 @@ func GetState(code int64) string {
 func New(sess *session.Session, regions []string) *Stats {
 	var wg sync.WaitGroup
 	nums := make(chan int)
-	srv := &Stats{Service: EC2{Regions: regions}, data: bytes.NewBufferString("")}
+	srv := &Stats{Service: EC2{Regions: regions}, Data: bytes.NewBufferString("")}
 	for i := range srv.Service.Regions {
 		wg.Add(1)
 		go func(i int) {
@@ -104,7 +104,7 @@ func New(sess *session.Session, regions []string) *Stats {
 			region := srv.Service.Regions[i]
 			svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
 			rn, nm := srv.listInstances(svc)
-			fmt.Println("Region Name: ", region, " | Number of instances: ", rn, "/", nm)
+			srv.Data.WriteString(fmt.Sprintf("Region Name: %s | Number of instances: %d/%d\n", region, rn, nm))
 			nums <- nm
 		}(i)
 	}
@@ -116,7 +116,7 @@ func New(sess *session.Session, regions []string) *Stats {
 	for num := range nums {
 		sum += num
 	}
-	svc.data.WriteString("Total instances: ", sum)
+	srv.Data.WriteString(fmt.Sprintf("Total instances: %d", sum))
 	return srv
 }
 
@@ -165,7 +165,7 @@ func (s Stats) listInstances(svc ec2iface.EC2API) (int, int) {
 		count += ttl
 		running += runs
 		// If runs != ttl || runs != 0 then send warning incomplete reservation shutdown
-		s.data.WriteString("Reservation: ", reservation, " | instances: ", runs, "/", ttl)
+		s.Data.WriteString(fmt.Sprintf("Reservation: %d | instances: %d/%d\n", reservation, runs, ttl))
 		reservation++
 	}
 	return running, count
