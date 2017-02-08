@@ -19,9 +19,9 @@ func main() {
 	s := stats.New(sess, stats.Regions)
 	templateData := &report.TemplateData{
 		Name: "Mr Freeze",
-		URL: s.Data,
+		URL: s.Service,
 	}
-	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com"}, "Hello Mr Freeze!", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
+	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com"}, "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {
 		fmt.Println("SendEmail Failure: ", err)
 	}

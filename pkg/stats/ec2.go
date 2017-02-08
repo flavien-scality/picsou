@@ -1,15 +1,15 @@
 package stats
 
 import (
-	"bytes"
+	// "bytes"
 	"fmt"
-	"sync"
+	// "sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	//"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
 // Regions defines all amazon regions to check for ec2 usage
@@ -50,7 +50,8 @@ type Instance struct {
 // http://docs.aws.amazon.com/general/latest/gr/glos-chap.html#reservation
 type Reservation struct {
 	// Instances started
-	Instances []Instance
+	Instances []*ec2.Instance
+	Running bool
 }
 
 // EC2 represente a collection of Regions and reservations from aws-ec2
@@ -58,18 +59,17 @@ type Reservation struct {
 // For more documentation see:
 // https://aws.amazon.com/ec2/
 type EC2 struct {
-	// Array of region of the reservations
-	Regions []string
+	Client *ec2.EC2
 	// Array of reservations for the ec2 account
-	Reservations []Reservation
+	Reservations []*Reservation
+	RunningRatio string
 }
 
 // Stats represente the differents statistics for the differents reservations
 // and instances from the ec2 account
 type Stats struct {
 	// Differents reservations and instances
-	Service EC2
-	Data []*bytes.Buffer
+	Service map[string]*EC2
 }
 
 // GetState match the status code with the representing status string
@@ -94,29 +94,31 @@ func GetState(code int64) string {
 // New will get from aws all the reservations and then the instances
 // from that informations the function will compute the appropriate stats
 func New(sess *session.Session, regions []string) *Stats {
-	var wg sync.WaitGroup
-	nums := make(chan int)
-	srv := &Stats{Service: EC2{Regions: regions}, Data: []*bytes.Buffer{}}
-	for i := range srv.Service.Regions {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			region := srv.Service.Regions[i]
-			svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
-			rn, nm := srv.listInstances(svc)
-			srv.Data = append(srv.Data, bytes.NewBufferString(fmt.Sprintf("Region Name: %s | Number of instances: %d/%d\n", region, rn, nm)))
-			nums <- nm
-		}(i)
+	// var wg sync.WaitGroup
+	// nums := make(chan int)
+	srv := &Stats{Service: make(map[string]*EC2)}
+	for _, region := range regions {
+		srv.Service[region] = &EC2{Reservations: []*Reservation{}}
+		// wg.Add(1)
+		func() {
+		        srv.Service[region].Client = ec2.New(sess, &aws.Config{Region: aws.String(region)})
+			// defer wg.Done()
+			_, _ = srv.getReservations(region)
+			// fmt.Printf("Region Name: %s | Number of instances: %d/%d\n", region, rn, nm)
+		        srv.Service[region].setRunningRatio()
+	                // fmt.Printf("running ratio: %f\n", srv.Service[region].RunningRatio)
+			// nums <- nm
+		}()
 	}
-	go func() {
-		wg.Wait()
-		close(nums)
-	}()
-	sum := 0
-	for num := range nums {
-		sum += num
-	}
-	srv.Data = append(srv.Data, bytes.NewBufferString(fmt.Sprintf("Total instances: %d", sum)))
+	// func() {
+	// 	wg.Wait()
+	// 	close(nums)
+	// }()
+	// sum := 0
+	// for num := range nums {
+	// 	sum += num
+	// }
+	// fmt.Printf("Total instances: %d", sum)
 	return srv
 }
 
@@ -143,30 +145,52 @@ func (s Stats) getInstances(reservation int, instances []*ec2.Instance) int {
 	return running
 }
 
-func (s Stats) listInstances(svc ec2iface.EC2API) (int, int) {
+func (s *EC2) setRunningRatio() {
+	var running, total uint64
+	for _, reservation := range s.Reservations {
+		if !reservation.Running {
+			total += len(reservation.Instances)
+		}
+		for _, instance := range reservation.Instances {
+			if GetState(*instance.State.Code) == "running" {
+				running += 1
+			}
+			total += 1
+		}
+	}
+	s.RunningRatio = fmt.Sprintf("%.2f", float64(running) * 100.0 / float64(total))
+}
+
+func (s Stats) getReservations(region string) (int, int) {
 	running := 0
 	count := 0
 
 	// Call the DescribeInstances Operation
-	resp, err := svc.DescribeInstances(nil)
+	resp, err := s.Service[region].Client.DescribeInstances(nil)
 	if err != nil {
 		panic(err)
 	}
 
 	// resp has all of the response data, pull out instance IDs:
-	reservation := 1
-	for _, res := range resp.Reservations {
+	reservationNb := 1
+	for _, reservation := range resp.Reservations {
 		// fmt.Println("\n\n** instances: ", res.Instances)
 		// fmt.Println(res)
 		// fmt.Print("Owner: ", *res.OwnerId)
 		// fmt.Println(" | ReservationId: ", *res.ReservationId)
-		runs := s.getInstances(reservation, res.Instances)
-		ttl := len(res.Instances)
+		runs := s.getInstances(reservationNb, reservation.Instances)
+		ttl := len(reservation.Instances)
+		// fmt.Println("ttl: ", ttl, " runs: ", runs, " instances: ", len(reservation.Instances))
+		if ttl != 0 && runs == ttl {
+			s.Service[region].Reservations = append(s.Service[region].Reservations, &Reservation{Instances: reservation.Instances, Running: true})
+		} else {
+			s.Service[region].Reservations = append(s.Service[region].Reservations, &Reservation{Instances: reservation.Instances, Running: false})
+		}
 		count += ttl
 		running += runs
 		// If runs != ttl || runs != 0 then send warning incomplete reservation shutdown
-		s.Data = append(s.Data, bytes.NewBufferString(fmt.Sprintf("Reservation: %d | instances: %d/%d\n", reservation, runs, ttl)))
-		reservation++
+		// fmt.Printf("Reservation: %d | instances: %d/%d\n", reservationNb, runs, ttl)
+		reservationNb++
 	}
 	return running, count
 }

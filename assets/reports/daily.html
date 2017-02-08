@@ -1,20 +1,43 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
-
+<head>
+  <style type="text/css">
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      text-align: center;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: solid;
+      border-width: 1px 1px;
+      text-align: center;
+    }
+  </style>
 </head>
 
 <body>
   <p>
-    <p>Hello {{.Name}}</p>
+    <h1>Hello {{.Name}}</h1>
     <p>Here is the daily AWS Cost Report:</p>
     <p>
-      <ul>
-      {{range $i, $val := .URL}}
-        <li>{{$val}}</li>
-      {{end}}
-      </ul>
-    <p>Sincerly,</p>
+      <h2>EC2 Running Ratio</h2>
+      <table>
+        <tr>
+          <th>Region</th>
+          <th>Running Ratio</th>
+        </tr>
+        {{range $i, $val := .URL}}
+        <tr>
+	  <td>{{$i}}</td>
+	  <td>{{$val.RunningRatio}}</td>
+        </tr>
+        {{end}}
+      </table>
+    <p><br>Sincerly,</p>
     <p>Picsou</p>
   </p>
 </body>
