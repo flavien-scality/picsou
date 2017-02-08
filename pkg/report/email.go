@@ -9,7 +9,7 @@ import (
 
 type TemplateData struct {
 	Name string
-	URL string
+	URL []*bytes.Buffer
 }
 
 type Template struct {

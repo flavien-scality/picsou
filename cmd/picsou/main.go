@@ -6,13 +6,12 @@ import (
 	"github.com/scality/picsou/pkg/report"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"net/smtp"
-	"strings"
 )
 
 var auth smtp.Auth
 
 func main() {
-	auth := smtp.PlainAuth("", "maxime.vaude@gmail.com", "totopassword", "smtp.gmail.com")
+	auth := smtp.PlainAuth("", "maxime.vaude@gmail.com", "toto", "smtp.gmail.com")
 	sess, err := session.NewSession()
 	if err != nil {
 		panic(err)
@@ -20,7 +19,7 @@ func main() {
 	s := stats.New(sess, stats.Regions)
 	templateData := &report.TemplateData{
 		Name: "Mr Freeze",
-		URL: strings.Replace(s.Data.String(), "\n", "<br />", -1),
+		URL: s.Data,
 	}
 	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com"}, "Hello Mr Freeze!", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {

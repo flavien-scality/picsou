@@ -6,16 +6,16 @@
 
 <body>
   <p>
-    Hello {{.Name}}<br>
-    <br>
-    Here is the daily AWS Cost Report:<br>
-    <br>
-    <br>
-    {{.URL}}<br>
-    <br>
-    Sincerly,<br>
-    <br>
-    Picsou
+    <p>Hello {{.Name}}</p>
+    <p>Here is the daily AWS Cost Report:</p>
+    <p>
+      <ul>
+      {{range $i, $val := .URL}}
+        <li>{{$val}}</li>
+      {{end}}
+      </ul>
+    <p>Sincerly,</p>
+    <p>Picsou</p>
   </p>
 </body>
 
