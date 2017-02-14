@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	//"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
@@ -66,10 +67,12 @@ type Reservation struct {
 type EC2 struct {
 	Client *ec2.EC2
 	// Array of reservations for the ec2 account
+	CloudWatch *CloudWatch
 	Reservations []*Reservation
 	ReservationsRunning []int
-	RunningRatio float64
-	VolumesTotal int
+	ReservationsUsage float64
+	Volumes []*ec2.Volume
+	VolumesUsage float64
 }
 
 // Stats represente the differents statistics for the differents reservations
@@ -78,6 +81,10 @@ type Stats struct {
 	// Differents reservations and instances
 	Service map[string]*EC2
 	Regions []string
+}
+
+type CloudWatch struct {
+	Client *cloudwatch.CloudWatch
 }
 
 // GetState match the status code with the representing status string
@@ -102,50 +109,22 @@ func GetState(code int64) string {
 // New will get from aws all the reservations and then the instances
 // from that informations the function will compute the appropriate stats
 func New(sess *session.Session) *Stats {
-	// var wg sync.WaitGroup
-	// nums := make(chan int)
 	srv := &Stats{Regions: regions, Service: make(map[string]*EC2)}
 	for _, region := range regions {
-		// wg.Add(1)
 		newService := &EC2{
 		        Client: ec2.New(sess, &aws.Config{Region: aws.String(region)}),
-			// defer wg.Done()
-			// fmt.Printf("Region Name: %s | Number of instances: %d/%d\n", region, rn, nm)
-	                // fmt.Printf("running ratio: %f\n", srv.Service[region].RunningRatio)
-			// nums <- nm
+			CloudWatch: &CloudWatch{Client: cloudwatch.New(sess, &aws.Config{Region: aws.String(region)}),},
 			Reservations: []*Reservation{},
+			Volumes: []*ec2.Volume{},
 		}
-		srv.Service[region] = newService
-		srv = srv.getReservations(region)
+		srv.Service[region] = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage()
 	}
-	// func() {
-	// 	wg.Wait()
-	// 	close(nums)
-	// }()
-	// sum := 0
-	// for num := range nums {
-	// 	sum += num
-	// }
-	// fmt.Printf("Total instances: %d", sum)
-	return srv.getVolumes()
+	return srv
 }
 
-func (s *Stats) RunningInstances(instances []*ec2.Instance) (int, int) {
-	// fmt.Println("reservation: ", reservation, " instances: ", len(instances))
+func (s *EC2) RunningInstances(instances []*ec2.Instance) (int, int) {
 	var running, total int
-	// t := time.Now()
 	for _, instance := range instances {
-		// fmt.Print("id: ", *instance.InstanceId)
-		// fmt.Print(" | deltatime: ", t.Sub(*instance.LaunchTime))
-		// fmt.Print(
-		// 	" | LaunchTime: ",
-		// 	instance.LaunchTime.Hour(),
-		// 	":",
-		// 	instance.LaunchTime.Minute(),
-		// )
-		// fmt.Print(" | ClientToken: ", *instance.ClientToken)
-		// fmt.Println(" | KeyName: ", *instance.KeyName)
-		// fmt.Println(" | State: ", GetState(*instance.State.Code))
 		if GetState(*instance.State.Code) == "running" {
 			running += 1
 		}
@@ -154,69 +133,148 @@ func (s *Stats) RunningInstances(instances []*ec2.Instance) (int, int) {
 	return running, total
 }
 
-func (s *EC2) setRunningRatio() (float64, []int) {
+func (s *EC2) getRunningInstances() *EC2 {
 	var reservationsRunning []int
-	var running, count = 0, 0
 	for i, reservation := range s.Reservations {
 		if reservation.InstancesRunning != 0 {
 			reservationsRunning = append(reservationsRunning, i)
 		}
-		if s.Reservations[i].InstancesTotal != 0 {
-			running += reservation.InstancesRunning
-			count += reservation.InstancesTotal
-		}
 	}
-	if count != 0 {
-		return float64(running) * 100.0 / float64(count), reservationsRunning
-	}
-	return float64(0), reservationsRunning
+	s.ReservationsRunning = reservationsRunning
+	return s
 }
 
-func (s *Stats) getReservations(region string) *Stats {
+func (s *EC2) GetRunningRatio() float64 {
+	if len(s.Reservations) == 0 {
+		return float64(0)
+	} else {
+		return float64(len(s.ReservationsRunning)) / float64(len(s.Reservations))
+	}
+}
+
+func (s *EC2) getReservations() *EC2 {
 	running := 0
 	count := 0
 
 	// Call the DescribeInstances Operation
-	resp, err := s.Service[region].Client.DescribeInstances(nil)
+	resp, err := s.Client.DescribeInstances(nil)
 	if err != nil {
 		panic(err)
 	}
 
 	// resp has all of the response data, pull out instance IDs:
 	for _, reservation := range resp.Reservations {
-		// fmt.Println("\n\n** instances: ", res.Instances)
-		// fmt.Println(res)
-		// fmt.Print("Owner: ", *res.OwnerId)
-		// fmt.Println(" | ReservationId: ", *res.ReservationId)
 		instancesRunning, instancesTotal := s.RunningInstances(reservation.Instances)
-		// fmt.Println("instancesTotal: ", instancesTotal, " instancesRunning: ", instancesRunning, " instances: ", len(reservation.Instances))
 		if instancesTotal != 0 && instancesRunning == instancesTotal {
-			s.Service[region].Reservations = append(s.Service[region].Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
+			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
 		} else {
-			s.Service[region].Reservations = append(s.Service[region].Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
+			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
 		}
 		running += instancesRunning
 		count += instancesTotal
-		// If instancesRunning != instancesTotal || instancesRunning != 0 then send warning incomplete reservation shutdown
-		// fmt.Printf("Reservation: %d | instances: %d/%d\n", reservationNb, instancesRunning, instancesTotal)
 	}
 	return s
 }
 
-func (s *Stats) getVolumes() *Stats {
-	var filterName = "availability-zone"
-	fmt.Println("len service: ", len(s.Service))
-	for region, _ := range s.Service {
-		fmt.Println(region)
-		var filter = &ec2.Filter{
-			Name: aws.String(filterName),
-			Values: []*string{ aws.String(region), },
+func (s *EC2) GetVolumesSize() int64 {
+	var count int64
+	for _, volume := range s.Volumes {
+		count += *volume.Size
+	}
+	return count
+}
+
+func (s *EC2) getVolumes() *EC2 { 
+	// var filterName = "availability-zone"
+	volumesOutput, err := s.Client.DescribeVolumes(nil)
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
+	s.Volumes = append(s.Volumes, volumesOutput.Volumes...)
+	return s
+}
+
+func (s *EC2) getReservationsUsage() *EC2 {
+	var total, nb float64
+	startTime := time.Now().AddDate(0, 0, -1)
+	delta, err := time.ParseDuration("-10m")
+	if err != nil {
+		fmt.Println("error during time parsing: ", err)
+	}
+	endTime := time.Now().Add(delta)
+	for _, running := range s.ReservationsRunning {
+			for _, instance := range s.Reservations[running].Instances {
+			res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
+				MetricName: aws.String("CPUUtilization"),
+				Namespace: aws.String("AWS/EC2"),
+				Dimensions: []*cloudwatch.Dimension {
+					&cloudwatch.Dimension {
+						Name: aws.String("InstanceId"),
+						Value: instance.InstanceId,
+					},
+				},
+				StartTime: aws.Time(startTime),
+				EndTime: aws.Time(endTime),
+				Period: aws.Int64(3600),
+				Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount"), },
+			})
+			if err != nil {
+				fmt.Println("error during cloudwatch getMetrics: ", err)
+			}
+			for _, datapoint := range res.Datapoints {
+				if *datapoint.Sum > 0.0 {
+					nb += *datapoint.SampleCount
+					total += *datapoint.Sum
+				}
+			}
 		}
-		volumesOutput, err := s.Service[region].Client.DescribeVolumes(&ec2.DescribeVolumesInput{Filters: []*ec2.Filter{ filter}})
-		if err != nil {
-			fmt.Println("Error: ", err)
-		}
-		s.Service[region].VolumesTotal = len(volumesOutput.Volumes)
+	}
+	if int(nb) != 0 {
+		s.ReservationsUsage = total/nb
+	} else {
+		s.ReservationsUsage = 0.0
 	}
 	return s
+}
+
+func (s *EC2) getVolumesUsage() *EC2 {
+	var total, nb float64
+	startTime := time.Now().AddDate(0, 0, -1)
+	delta, err := time.ParseDuration("-10m")
+	if err != nil {
+		fmt.Println("error during time parsing: ", err)
+	}
+	endTime := time.Now().Add(delta)
+	for _, volume := range s.Volumes {
+		res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
+			MetricName: aws.String("VolumeIdleTime"),
+			Namespace: aws.String("AWS/EBS"),
+			Dimensions: []*cloudwatch.Dimension {
+				&cloudwatch.Dimension {
+					Name: aws.String("VolumeId"),
+					Value: volume.VolumeId,
+				},
+			},
+			StartTime: aws.Time(startTime),
+			EndTime: aws.Time(endTime),
+			Period: aws.Int64(3600),
+			Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount") },
+		})
+		if err != nil {
+			fmt.Println("error during cloudwatch getMetrics: ", err)
+		}
+		for _, datapoint := range res.Datapoints {
+			if *datapoint.Sum > 0.0 {
+				nb += *datapoint.SampleCount
+				total += *datapoint.Sum
+			}
+		}
+	}
+	if int(nb) != 0 {
+		s.VolumesUsage = 100.0 - (total/nb/3600.0)*100
+	} else {
+		s.VolumesUsage = 0.0
+	}
+	return s
+
 }

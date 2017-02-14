@@ -21,6 +21,9 @@ func main() {
 		Name: "Mr Freeze",
 		Stats: s,
 	}
+	// for _, meta := range s.Service {
+	// 	fmt.Printf("service: %#v\n", meta)
+	// }
 	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com"}, "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {
 		fmt.Println("SendEmail Failure: ", err)

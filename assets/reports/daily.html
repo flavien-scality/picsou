@@ -247,7 +247,7 @@
           <!-- 1 Column Text + Button : END -->
 
           <!-- Report ! : BEGIN -->
-          <tr>
+          <tr style="text-align: center;">
             <h2>EC2 Report</h2>
           </tr>
           <tr>
@@ -264,7 +264,8 @@
                             <tr>
                               <th>Running</th>
                               <th>Total</th>
-                              <th>Ratio</th>
+                              <th>Ratio (%)</th>
+			      <th>Usage (%)</th>
                             </tr>
                           </tr>
                         </thead>
@@ -274,7 +275,8 @@
                         <td>{{$i}}</td>
                         <td>{{len $val.ReservationsRunning}}</td>
                         <td>{{len $val.Reservations}}</td>
-                        <td>{{printf "%.2f" $val.RunningRatio}}</td>
+			<td>{{printf "%.2f" $val.GetRunningRatio }}</td>
+			<td>{{printf "%.2f" $val.ReservationsUsage }}</td>
                       </tr>
                       {{end}}
                     </table>
@@ -294,7 +296,7 @@
           <!-- Clear Spacer : END -->
 
           <!-- Report ! : BEGIN -->
-          <tr>
+          <tr style="text-align: center;">
             <h2>EBS Report</h2>
           </tr>
           <tr>
@@ -310,9 +312,9 @@
                             </tr>
                             <tr>
                               <th>Total</th>
-                              <th>Usage</th>
-                              <th>Capacity</th>
-                              <th>Ratio</th>
+                              <th>Capacity (GiB)</th>
+                              <th>Usage (%)</th>
+                              <th>Ratio (%)</th>
                             </tr>
                           </tr>
                         </thead>
@@ -320,9 +322,9 @@
                       {{range $i, $val := .Stats.Service}}
                       <tr>
                         <td>{{$i}}</td>
-                        <td>{{$val.VolumesTotal}}</td>
-			<td>0</td>
-                        <td>0</td>
+                        <td>{{len $val.Volumes}}</td>
+			<td>{{$val.GetVolumesSize}}</td>
+			<td>{{printf "%.2f" $val.VolumesUsage}}</td>
                         <td>0</td>
                       </tr>
                       {{end}}
