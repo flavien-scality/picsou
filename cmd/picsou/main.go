@@ -16,10 +16,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	s := stats.New(sess, stats.Regions)
+	s := stats.New(sess)
 	templateData := &report.TemplateData{
 		Name: "Mr Freeze",
-		URL: s.Service,
+		Stats: s,
 	}
 	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com"}, "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {

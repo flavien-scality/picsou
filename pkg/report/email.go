@@ -9,14 +9,16 @@ import (
 	"github.com/scality/picsou/pkg/stats"
 )
 
+// TODO: 3 different example report levels: total, regions, person (SSH KEY)
+
 type TemplateData struct {
 	Name string
-	URL map[string]*stats.EC2
+	Stats *stats.Stats
 }
 
 type Template struct {
 	filename string
-	data interface{}
+	data *TemplateData
 }
 
 //Request struct
@@ -45,10 +47,12 @@ func NewRequest(auth *smtp.Auth, to []string, subject, body, templatePath string
 func (r *Request) SendEmail() *Request {
 	date := time.Now()
 	year, month, day := date.Date()
+	hour, min, sec := date.Clock()
+	now := fmt.Sprintf("%02d/%02d/%d %02d:%02d:%02d", day, month, year, hour, min, sec)
 	from := "From: maxime.vaude@gmail.com\r\n"
 	to := "To: " + r.to[0] + "\r\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n"
-	subject := fmt.Sprintf("Subject: %s %d/%d/%d\r\n\r\n", r.subject, day, month, year)
+	subject := fmt.Sprintf("Subject: %s %s\r\n\r\n", r.subject, now)
 	msg := []byte(from + to + mime + subject + "\n" + r.body + "\r\n")
 	addr := "smtp.gmail.com:587"
 
