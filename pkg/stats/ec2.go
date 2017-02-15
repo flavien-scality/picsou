@@ -52,8 +52,7 @@ type Instance struct {
 type Reservation struct {
 	// Instances started
 	Instances []*ec2.Instance
-	InstancesRunning int
-	InstancesTotal int
+	InstancesRunning []int
 	// Volumes []*ec2.Volume
 	// VolumesTotalSize int
 	// VolumesUsedSize int
@@ -71,6 +70,7 @@ type EC2 struct {
 	Reservations []*Reservation
 	ReservationsRunning []int
 	ReservationsUsage float64
+	Users map[string]int
 	Volumes []*ec2.Volume
 	VolumesUsage float64
 }
@@ -117,26 +117,28 @@ func New(sess *session.Session) *Stats {
 			Reservations: []*Reservation{},
 			Volumes: []*ec2.Volume{},
 		}
-		srv.Service[region] = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage()
+		newService = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage()
+		if len(newService.Reservations) != 0 {
+			srv.Service[region] = newService
+		}
 	}
 	return srv
 }
 
-func (s *EC2) RunningInstances(instances []*ec2.Instance) (int, int) {
-	var running, total int
-	for _, instance := range instances {
+func (s *EC2) RunningInstances(instances []*ec2.Instance) []int {
+	var running []int
+	for i, instance := range instances {
 		if GetState(*instance.State.Code) == "running" {
-			running += 1
+			running = append(running, i)
 		}
-		total += 1
 	}
-	return running, total
+	return running
 }
 
 func (s *EC2) getRunningInstances() *EC2 {
 	var reservationsRunning []int
 	for i, reservation := range s.Reservations {
-		if reservation.InstancesRunning != 0 {
+		if len(reservation.InstancesRunning) != 0 {
 			reservationsRunning = append(reservationsRunning, i)
 		}
 	}
@@ -148,7 +150,7 @@ func (s *EC2) GetRunningRatio() float64 {
 	if len(s.Reservations) == 0 {
 		return float64(0)
 	} else {
-		return float64(len(s.ReservationsRunning)) / float64(len(s.Reservations))
+		return float64(len(s.ReservationsRunning)) / float64(len(s.Reservations)) * 100.0
 	}
 }
 
@@ -164,14 +166,14 @@ func (s *EC2) getReservations() *EC2 {
 
 	// resp has all of the response data, pull out instance IDs:
 	for _, reservation := range resp.Reservations {
-		instancesRunning, instancesTotal := s.RunningInstances(reservation.Instances)
-		if instancesTotal != 0 && instancesRunning == instancesTotal {
-			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
+		instancesRunning := s.RunningInstances(reservation.Instances)
+		if len(reservation.Instances) != 0 {
+			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning})
 		} else {
-			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning, InstancesTotal: instancesTotal})
+			s.Reservations = append(s.Reservations, &Reservation{Instances: reservation.Instances, InstancesRunning: instancesRunning})
 		}
-		running += instancesRunning
-		count += instancesTotal
+		running += len(instancesRunning)
+		count += len(reservation.Instances)
 	}
 	return s
 }
@@ -184,7 +186,7 @@ func (s *EC2) GetVolumesSize() int64 {
 	return count
 }
 
-func (s *EC2) getVolumes() *EC2 { 
+func (s *EC2) getVolumes() *EC2 {
 	// var filterName = "availability-zone"
 	volumesOutput, err := s.Client.DescribeVolumes(nil)
 	if err != nil {
@@ -271,9 +273,9 @@ func (s *EC2) getVolumesUsage() *EC2 {
 		}
 	}
 	if int(nb) != 0 {
-		s.VolumesUsage = 100.0 - (total/nb/3600.0)*100
+		s.VolumesUsage = 100.0 - total / nb / 3600.0 * 100
 	} else {
-		s.VolumesUsage = 0.0
+		s.VolumesUsage = 100.0
 	}
 	return s
 
