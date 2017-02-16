@@ -1,8 +1,6 @@
 package stats
 
 import (
-	// "bytes"
-	// "sync"
 	"fmt"
 	"time"
 
@@ -59,6 +57,11 @@ type Reservation struct {
 	// VolumesUsageRatio float64
 }
 
+type User struct {
+	Reservations map[int][]int
+	Volumes []int
+}
+
 // EC2 represente a collection of Regions and reservations from aws-ec2
 //
 // For more documentation see:
@@ -70,7 +73,7 @@ type EC2 struct {
 	Reservations []*Reservation
 	ReservationsRunning []int
 	ReservationsUsage float64
-	Users map[string]int
+	Users map[string]*User
 	Volumes []*ec2.Volume
 	VolumesUsage float64
 }
@@ -116,8 +119,9 @@ func New(sess *session.Session) *Stats {
 			CloudWatch: &CloudWatch{Client: cloudwatch.New(sess, &aws.Config{Region: aws.String(region)}),},
 			Reservations: []*Reservation{},
 			Volumes: []*ec2.Volume{},
+			Users: make(map[string]*User),
 		}
-		newService = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage()
+		newService = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage().getUsers()
 		if len(newService.Reservations) != 0 {
 			srv.Service[region] = newService
 		}
@@ -279,4 +283,67 @@ func (s *EC2) getVolumesUsage() *EC2 {
 	}
 	return s
 
+}
+
+func (s *EC2) getUsers() *EC2 {
+	var username string
+	users := make(map[string]*User)
+	for r, reservation := range s.Reservations {
+		for i, instance := range reservation.Instances {
+			username = *instance.KeyName
+			if _, ok := users[username]; !ok {
+				users[username] = &User{
+					Reservations: make(map[int][]int),
+					Volumes: []int{},
+				}
+			}
+			users[username].Reservations[r] = append(users[username].Reservations[r], i)
+		}
+	}
+	for i, volume := range s.Volumes {
+		if len(volume.Attachments) != 0 {
+			for _, v := range volume.Attachments {
+				params := &ec2.DescribeInstancesInput{
+					Filters: []*ec2.Filter{
+						{
+							Name: aws.String("instance-id"),
+							Values: []*string{v.InstanceId},
+						},
+					},
+				}
+				resp, err := s.Client.DescribeInstances(params)
+				if err != nil {
+					fmt.Println("error when describing instances for volume: ", err)
+				}
+				for _, res := range resp.Reservations {
+					for _, ins := range res.Instances {
+						username = *ins.KeyName
+						users[username].Volumes = append(users[username].Volumes, i)
+					}
+				}
+			}
+		}
+	}
+	s.Users = users
+	return s
+}
+
+func (s *EC2) GetUsersRunning(user string) int {
+	count := 0
+	for r, _ := range s.Users[user].Reservations {
+		for _, ri := range s.ReservationsRunning {
+			if r == ri {
+				count += 1
+			}
+		}
+	}
+	return count
+}
+
+func (s *Stats) Divide(a, b int) float64 {
+	if b == 0 {
+		return float64(0)
+	} else {
+		return float64(a) / float64(b) * 100
+	}
 }

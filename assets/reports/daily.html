@@ -378,10 +378,15 @@
 
           <!-- Report ! : BEGIN -->
           <tr style="text-align: center;">
-            <h2>Instances per Users</h2>
+            <h2>Instances per User</h2>
           </tr>
           <tr>
             <!-- Bulletproof Background Images c/o https://backgrounds.cm -->
+		    {{$service := .Stats}}
+		    {{range $i, $val := .Stats.Service}}
+		    <tr>
+		    <h3>{{$i}} Region</h3>
+		    </tr>
             <td valign="middle" style="text-align: center;">
                     <table class="ec2-report">
                       <tr>
@@ -395,17 +400,21 @@
                             </tr>
                         </thead>
                       </tr>
-                      {{range $i, $val := .Stats.Service}}
+		      {{range $user, $r := $val.Users}}
+		      {{$running := $val.GetUsersRunning $user}}
+		      {{$total := len $r.Reservations}}
+		      {{$ratio := $service.Divide $running $total}}
                       <tr>
-                        <td>{{$i}}</td>
-                        <td>{{len $val.ReservationsRunning}}</td>
-                        <td>{{len $val.Reservations}}</td>
-			<td>{{printf "%.2f" $val.GetRunningRatio }}</td>
-			<td>{{printf "%.2f" $val.ReservationsUsage }}</td>
+                        <td>{{$user}}</td>
+                        <td>{{$running}}</td>
+                        <td>{{$total}}</td>
+			<td>{{printf "%.2f" $ratio}}</td>
+			<td>0</td>
                       </tr>
                       {{end}}
                 </table>
             </td>
+	  {{end}}
           </tr>
           <!-- Background Image with Text : END -->
 
@@ -419,9 +428,14 @@
 
           <!-- Report ! : BEGIN -->
           <tr style="text-align: center;">
-            <h2>Volumes per Users</h2>
+            <h2>Volumes per User</h2>
           </tr>
           <tr>
+	    {{$service := .Stats}}
+	    {{range $i, $val := .Stats.Service}}
+	    <tr>
+	      <h3>{{$i}} Region</h3>
+	    </tr>
             <!-- Bulletproof Background Images c/o https://backgrounds.cm -->
             <td valign="middle" style="text-align: center;">
                     <table class="ec2-report">
@@ -437,16 +451,17 @@
                           </tr>
                         </thead>
                       </tr>
-                      {{range $i, $val := .Stats.Service}}
+                      {{range $user, $r := $val.Users}}
                       <tr>
-                        <td>{{$i}}</td>
-                        <td>{{len $val.Volumes}}</td>
+			<td>{{$user}}</td>
+                        <td>{{len $r.Volumes}}</td>
 			<td>{{$val.GetVolumesSize}}</td>
-			<td>{{printf "%.2f" $val.VolumesUsage}}</td>
+			<td>0</td>
                       </tr>
                       {{end}}
                 </table>
             </td>
+	    {{end}}
           </tr>
           <!-- Background Image with Text : END -->
 

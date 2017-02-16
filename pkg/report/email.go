@@ -66,12 +66,12 @@ func (r *Request) SendEmail() *Request {
 func (r *Request) ParseTemplate() *Request {
 	t, err := template.ParseFiles(r.template.filename)
 	if err != nil {
-		fmt.Println("pb during parse template")
+		fmt.Println("pb during parse template: ", err)
 		return nil
 	}
 	buf := new(bytes.Buffer)
 	if err = t.Execute(buf, r.template.data); err != nil {
-		fmt.Println("pb during execute template")
+		fmt.Println("pb during execute template: ", err)
 		return nil
 	}
 	r.body = buf.String()
