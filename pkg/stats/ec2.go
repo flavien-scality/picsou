@@ -53,10 +53,10 @@ type Reservation struct {
   Instances []*ec2.Instance
   InstancesRunning []int
   InstancesUsage float64
-  // Volumes []*ec2.Volume
+  Volumes []*ec2.Volume
+  VolumesUsage float64
   // VolumesTotalSize int
   // VolumesUsedSize int
-  // VolumesUsageRatio float64
 }
 
 type User struct {
@@ -268,108 +268,6 @@ func (s *EC2) GetReservationsUsage(targets []int) float64 {
 
 func (s *EC2) getReservationsUsage() *EC2 {
   s.ReservationsUsage = s.GetReservationsUsage(s.ReservationsRunning)
-  return s
-}
-
-func (s *Reservation) GetInstancesUsage(targets []int) float64 {
-  var instance *ec2.Instance
-  var total, nb float64
-
-  startTime := time.Now().AddDate(0, 0, -1)
-  delta, err := time.ParseDuration("-10m")
-  if err != nil {
-    fmt.Println("error during time parsing: ", err)
-  }
-  endTime := time.Now().Add(delta)
-
-  for _, target := range targets {
-    instance = s.Instances[target]
-    res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
-      MetricName: aws.String("CPUUtilization"),
-      Namespace: aws.String("AWS/EC2"),
-      Dimensions: []*cloudwatch.Dimension {
-        &cloudwatch.Dimension {
-          Name: aws.String("InstanceId"),
-          Value: instance.InstanceId,
-        },
-      },
-      StartTime: aws.Time(startTime),
-      EndTime: aws.Time(endTime),
-      Period: aws.Int64(3600),
-      Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount"), },
-    })
-    if err != nil {
-      fmt.Println("error during cloudwatch getMetrics: ", err)
-    }
-    for _, datapoint := range res.Datapoints {
-      if *datapoint.Sum > 0.0 {
-        nb += *datapoint.SampleCount
-        total += *datapoint.Sum
-      }
-    }
-  }
-  if int(nb) != 0 {
-    return total / nb
-  }
-  return 0.0
-}
-
-func (s *Reservation) getInstancesUsage() *Reservation {
-  s.InstancesUsage = s.GetInstancesUsage(s.InstancesRunning)
-  return s
-}
-
-
-func (s *EC2) GetVolumesUsage(targets []int) float64 {
-  var total, nb float64
-  startTime := time.Now().AddDate(0, 0, -1)
-  delta, err := time.ParseDuration("-10m")
-  if err != nil {
-    fmt.Println("error during time parsing: ", err)
-  }
-  endTime := time.Now().Add(delta)
-  var iterator []*ec2.Volume
-  if targets != nil {
-    for _, vol := range targets {
-      iterator = append(iterator, s.Volumes[vol])
-    }
-  } else {
-    iterator = s.Volumes
-  }
-  for _, volume := range iterator {
-    res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
-      MetricName: aws.String("VolumeIdleTime"),
-      Namespace: aws.String("AWS/EBS"),
-      Dimensions: []*cloudwatch.Dimension {
-        &cloudwatch.Dimension {
-          Name: aws.String("VolumeId"),
-          Value: volume.VolumeId,
-        },
-      },
-      StartTime: aws.Time(startTime),
-      EndTime: aws.Time(endTime),
-      Period: aws.Int64(3600),
-      Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount") },
-    })
-    if err != nil {
-      fmt.Println("error during cloudwatch getMetrics: ", err)
-    }
-    for _, datapoint := range res.Datapoints {
-      if *datapoint.Sum > 0.0 {
-        nb += *datapoint.SampleCount
-        total += *datapoint.Sum
-      }
-    }
-  }
-  if int(nb) != 0 {
-    return 100.0 - total / nb / 3600.0 * 100
-  }
-  return 100.0
-}
-
-
-func (s *EC2) getVolumesUsage() *EC2 {
-  s.VolumesUsage = s.GetVolumesUsage(nil)
   return s
 }
 

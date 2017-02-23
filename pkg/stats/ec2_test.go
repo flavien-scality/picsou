@@ -38,7 +38,7 @@ func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*e
 func TestListingInstances(t *testing.T) {
  // Setup test
  mockSvc := &mockEC2Client{}
- srv := Stats{Service: EC2{Regions: []string{"us-west-1",},},}
+ srv := Stats{Regions: []string{"us-west-1"}, Service: EC2{},}
 
  Convey("Testing instances listing", t, func() {
  Convey("Should be equal to '2'", func() {
