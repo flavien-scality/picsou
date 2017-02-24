@@ -8,7 +8,7 @@ import (
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/cloudwatch"
   "github.com/aws/aws-sdk-go/service/ec2"
-  //"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+  "github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
 // Regions defines all amazon regions to check for ec2 usage
@@ -123,7 +123,7 @@ func New(sess *session.Session) *Stats {
       Volumes: []*ec2.Volume{},
       Users: make(map[string]*User),
     }
-    newService = newService.getReservations().getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage().getUsers().getUsages()
+    newService = newService.getReservations(newService.Client).getRunningInstances().getReservationsUsage().getVolumes().getVolumesUsage().getUsers().getUsages()
     if len(newService.Reservations) != 0 {
       srv.Service[region] = newService
     }
@@ -175,12 +175,12 @@ func (s *Reservation) GetInstancesRatio() float64 {
   }
 }
 
-func (s *EC2) getReservations() *EC2 {
+func (s *EC2) getReservations(svc ec2iface.EC2API) *EC2 {
   running := 0
   count := 0
 
   // Call the DescribeInstances Operation
-  resp, err := s.Client.DescribeInstances(nil)
+  resp, err := svc.DescribeInstances(nil)
   if err != nil {
     panic(err)
   }
@@ -341,3 +341,107 @@ func (s *User) ReservationsKeys() []int {
   }
   return keys
 }
+
+
+// Metrics Computation
+func (s *Reservation) GetInstancesUsage(targets []int) float64 {
+  var instance *ec2.Instance
+  var total, nb float64
+
+  startTime := time.Now().AddDate(0, 0, -1)
+  delta, err := time.ParseDuration("-10m")
+  if err != nil {
+    fmt.Println("error during time parsing: ", err)
+  }
+  endTime := time.Now().Add(delta)
+
+  for _, target := range targets {
+    instance = s.Instances[target]
+    res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
+      MetricName: aws.String("CPUUtilization"),
+      Namespace: aws.String("AWS/EC2"),
+      Dimensions: []*cloudwatch.Dimension {
+        &cloudwatch.Dimension {
+          Name: aws.String("InstanceId"),
+          Value: instance.InstanceId,
+        },
+      },
+      StartTime: aws.Time(startTime),
+      EndTime: aws.Time(endTime),
+      Period: aws.Int64(3600),
+      Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount"), },
+    })
+    if err != nil {
+      fmt.Println("error during cloudwatch getMetrics: ", err)
+    }
+    for _, datapoint := range res.Datapoints {
+      if *datapoint.Sum > 0.0 {
+        nb += *datapoint.SampleCount
+        total += *datapoint.Sum
+      }
+    }
+  }
+  if int(nb) != 0 {
+    return total / nb
+  }
+  return 0.0
+}
+
+func (s *Reservation) getInstancesUsage() *Reservation {
+  s.InstancesUsage = s.GetInstancesUsage(s.InstancesRunning)
+  return s
+}
+
+func (s *EC2) GetVolumesUsage(targets []int) float64 {
+  var total, nb float64
+  startTime := time.Now().AddDate(0, 0, -1)
+  delta, err := time.ParseDuration("-10m")
+  if err != nil {
+    fmt.Println("error during time parsing: ", err)
+  }
+  endTime := time.Now().Add(delta)
+  var iterator []*ec2.Volume
+  if targets != nil {
+    for _, vol := range targets {
+      iterator = append(iterator, s.Volumes[vol])
+    }
+  } else {
+    iterator = s.Volumes
+  }
+  for _, volume := range iterator {
+    res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
+      MetricName: aws.String("VolumeIdleTime"),
+      Namespace: aws.String("AWS/EBS"),
+      Dimensions: []*cloudwatch.Dimension {
+        &cloudwatch.Dimension {
+          Name: aws.String("VolumeId"),
+          Value: volume.VolumeId,
+        },
+      },
+      StartTime: aws.Time(startTime),
+      EndTime: aws.Time(endTime),
+      Period: aws.Int64(3600),
+      Statistics: []*string{ aws.String("Sum"), aws.String("SampleCount") },
+    })
+    if err != nil {
+      fmt.Println("error during cloudwatch getMetrics: ", err)
+    }
+    for _, datapoint := range res.Datapoints {
+      if *datapoint.Sum > 0.0 {
+        nb += *datapoint.SampleCount
+        total += *datapoint.Sum
+      }
+    }
+  }
+  if int(nb) != 0 {
+    return 100.0 - total / nb / 3600.0 * 100
+  }
+  return 100.0
+}
+
+
+func (s *EC2) getVolumesUsage() *EC2 {
+  s.VolumesUsage = s.GetVolumesUsage(nil)
+  return s
+}
+
