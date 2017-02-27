@@ -1,5 +1,6 @@
 BINARIES ?=	picsou
-GODIR ?= $GOPATH/src/github.com/scality/picsou
+GOPATH := 	$(shell echo $$GOPATH)
+GODIR ?= 	$(GOPATH)/src/github.com/scality/picsou
 
 PKG_BASE_DIR ?=	./pkg
 CONVEY_PORT ?=	9042
@@ -60,6 +61,22 @@ convey:
 .PHONY:	cover
 cover:	profile.txt
 	$(GO) tool cover -html=coverage.txt -o coverage.html
+
+
+.PHONY: lambda
+lambda:
+	GOOS=linux GOARCH=amd64 go build -v ./...
+	GOSOS=linux GOARCH=amd64 go build -o $(BINARIES) ./cmd/$(BINARIES)
+	zip -r lambda index.js picsou
+	aws lambda create-function --zip-file fileb://$(GODIR)/lambda.zip --function-name picsou-daily-report --runtime nodejs4.3 --role  arn:aws:iam::944690102204:role/aws_stats --handler index.handler
+
+
+.PHONY: deploy
+deploy: 
+	GOOS=linux GOARCH=amd64 go build -v ./...
+	GOSOS=linux GOARCH=amd64 go build -o $(BINARIES) ./cmd/$(BINARIES)
+	zip -r lambda index.js picsou
+	aws lambda update-function-code --zip-file fileb://$(GODIR)/lambda.zip --function-name picsou-daily-report --publish
 
 
 profile.txt:	$(SOURCES)
