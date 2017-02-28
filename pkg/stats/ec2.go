@@ -234,39 +234,9 @@ func (s *EC2) getVolumes() *EC2 {
 func (s *EC2) GetReservationsUsage(targets []int) float64 {
 	var total, nb float64
 
-	startTime := time.Now().AddDate(0, 0, -1)
-	delta, err := time.ParseDuration("-10m")
-	if err != nil {
-		fmt.Println("error during time parsing: ", err)
-	}
-	endTime := time.Now().Add(delta)
-
 	for _, target := range targets {
-		for _, instance := range s.Reservations[target].Instances {
-			res, err := s.CloudWatch.Client.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
-				MetricName: aws.String("CPUUtilization"),
-				Namespace:  aws.String("AWS/EC2"),
-				Dimensions: []*cloudwatch.Dimension{
-					&cloudwatch.Dimension{
-						Name:  aws.String("InstanceId"),
-						Value: instance.InstanceId,
-					},
-				},
-				StartTime:  aws.Time(startTime),
-				EndTime:    aws.Time(endTime),
-				Period:     aws.Int64(3600),
-				Statistics: []*string{aws.String("Sum"), aws.String("SampleCount")},
-			})
-			if err != nil {
-				fmt.Println("error during cloudwatch getMetrics: ", err)
-			}
-			for _, datapoint := range res.Datapoints {
-				if *datapoint.Sum > 0.0 {
-					nb += *datapoint.SampleCount
-					total += *datapoint.Sum
-				}
-			}
-		}
+		total += s.Reservations[target].getInstancesUsage().InstancesUsage
+		nb += 1
 	}
 	if int(nb) != 0 {
 		return total / nb
