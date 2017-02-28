@@ -6,13 +6,12 @@ import (
  "github.com/scality/picsou/pkg/report"
  "github.com/aws/aws-sdk-go/aws/session"
  "net/smtp"
- "os"
 )
 
 var auth smtp.Auth
 
 func main() {
-  auth := smtp.PlainAuth("", os.Getenv("PICSOU_USER"), os.Getenv("PICSOU_PSD"), "smtp.gmail.com")
+  auth := smtp.PlainAuth("", "picsou@scality.com", "", "smtp.gmail.com")
   sess, err := session.NewSession()
   if err != nil {
     panic(err)

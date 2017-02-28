@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/smtp"
-	"os"
 	"strings"
 
 	"github.com/apex/go-apex"
-	"github.com/scality/picsou/pkg/stats"
+	"github.com/scality/picsou/picsou"
 	"github.com/scality/picsou/pkg/report"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
@@ -20,7 +19,7 @@ type message struct {
 }
 
 func main() {
-	auth := smtp.PlainAuth("", os.Getenv("PICSOU_USER"), os.Getenv("PICSOU_PSD"), "smtp.gmail.com")
+	auth := smtp.PlainAuth("", "picsou@scality.com", "", "smtp.gmail.com")
 	sess, err := session.NewSession()
 	if err != nil {
 		panic(err)

@@ -3,7 +3,6 @@
   "description": "aws cost reporter",
   "memory": 128,
   "runtime": "golang",
-  "timeout": 5,
   "role": "arn:aws:iam::944690102204:role/picsou_lambda_function",
   "environment": {}
 }
