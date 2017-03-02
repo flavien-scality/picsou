@@ -22,7 +22,7 @@ func main() {
 		Name:  "Mr Freeze",
 		Stats: s,
 	}
-	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com", "thibault.riviere@scality.com", "mathieu.cassagne@scality.com"}, "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
+	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com", "thibault.riviere@scality.com"}, "AWS Daily Report", "Hello, world!", "/usr/local/bin/assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {
 		fmt.Println("SendEmail Failure: ", err)
 	}
