@@ -2,6 +2,9 @@ general:
   branches:
 
 machine:
+  services:
+    - docker
+
   pre:
     - sudo rm -rf /usr/local/go
     - curl -L https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
@@ -18,9 +21,11 @@ machine:
     - cp -r $HOME/$CIRCLE_PROJECT_REPONAME $SOURCES
 
 dependencies:
-    override:
-      - cd $WORKDIR && make deps
-      - go get -u github.com/golang/lint/golint
+  override:
+    - cd $WORKDIR && make deps
+    - go get -u github.com/golang/lint/golint
+  post:
+    - docker build -t $AWS_ACCOUND_ID.dkr.ecr.us-west-1.amazonaws.com/picsou:$CIRCLE_SHA1 .
 
 test:
   override:
@@ -31,3 +36,9 @@ test:
     - mkdir $CIRCLE_ARTIFACTS/coverage
     - mv $WORKDIR/coverage.txt $CIRCLE_ARTIFACTS/coverage
     - mv $WORKDIR/coverage.html $CIRCLE_ARTIFACTS/coverage
+
+deployment:
+  prod:
+    branch: master
+    commands:
+      - ./deploy.sh
