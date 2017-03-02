@@ -11,7 +11,7 @@ PACKAGES :=	$(shell go list ./pkg/...)
 GO ?=		$(GOENV) go
 
 
-all:	deps build
+all:	build
 
 
 .PHONY: build
@@ -19,6 +19,7 @@ build:	$(BINARIES)
 
 
 $(BINARIES):	$(SOURCES)
+	$(GOFLAGS) $(GO) get ./...
 	$(GOFLAGS) $(GO) build -v ./...
 	$(GOFLAGS) $(GO) build -o $@ ./cmd/$@
 
