@@ -36,6 +36,7 @@ test: deps
 
 .PHONY: deps
 deps:
+	pip install -r requirements.txt
 	$(GO) get -t ./...
 
 
