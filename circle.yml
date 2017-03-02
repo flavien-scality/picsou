@@ -1,7 +1,5 @@
-general:
-  branches:
-
 machine:
+
   services:
     - docker
 
@@ -20,17 +18,23 @@ machine:
     - mkdir -p $WORKDIR
     - cp -r $HOME/$CIRCLE_PROJECT_REPONAME $SOURCES
 
+
 dependencies:
+
   override:
     - cd $WORKDIR && make deps
     - go get -u github.com/golang/lint/golint
+
   post:
-    - docker build -t $AWS_ACCOUND_ID.dkr.ecr.us-west-1.amazonaws.com/picsou:$CIRCLE_SHA1 .
+    - cd $WORKDIR && make docker-build
+    - cd $WORKDIR && docker build -t $AWS_ACCOUND_ID.dkr.ecr.us-west-1.amazonaws.com/picsou:$CIRCLE_SHA1 -f $WORKDIR/Dockerfile .
+
 
 test:
+
   override:
-      - cd $WORKDIR && make lint
-      - cd $WORKDIR && make cover
+    - cd $WORKDIR && make lint
+    - cd $WORKDIR && make cover
 
   post:
     - mkdir $CIRCLE_ARTIFACTS/coverage
@@ -38,6 +42,7 @@ test:
     - mv $WORKDIR/coverage.html $CIRCLE_ARTIFACTS/coverage
 
 deployment:
+
   prod:
     branch: master
     commands:
