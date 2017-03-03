@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/scality/picsou/pkg/report"
+	"github.com/scality/picsou/pkg/settings"
 	"github.com/scality/picsou/pkg/stats"
 	"github.com/urfave/cli"
 	"net/smtp"
@@ -19,12 +20,14 @@ func getReport() {
 	if err != nil {
 		panic(err)
 	}
+	meta := settings.New("./assets/settings.yml")
+	fmt.Println("parsing settings done: ", meta)
 	s := stats.New(sess)
 	templateData := &report.TemplateData{
-		Name:  "Mr Freeze",
-		Stats: s,
+		Settings: meta,
+		Data: s,
 	}
-	r := report.NewRequest(&auth, []string{"maxime.vaude@scality.com", "thibault.riviere@scality.com"}, "AWS Daily Report", "Hello, world!", "/usr/local/bin/assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
+	r := report.NewRequest(&auth, meta.GetUsersEmail(), "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
 	if r != nil {
 		fmt.Println("SendEmail Failure: ", err)
 	}

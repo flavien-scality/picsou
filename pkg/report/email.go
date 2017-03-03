@@ -3,6 +3,7 @@ package report
 import (
 	"bytes"
 	"fmt"
+	"github.com/scality/picsou/pkg/settings"
 	"github.com/scality/picsou/pkg/stats"
 	"html/template"
 	"net/smtp"
@@ -13,8 +14,8 @@ import (
 
 // TemplateData struct
 type TemplateData struct {
-	Name  string
-	Stats *stats.Stats
+	Settings *settings.Settings
+	Data *stats.Stats
 }
 
 // Template struct
@@ -49,18 +50,19 @@ func NewRequest(auth *smtp.Auth, to []string, subject, body, templatePath string
 
 // SendEmail handles sending an email with the formated template
 func (r *Request) SendEmail() *Request {
+	fmt.Println("r.to: ", r.to)
 	date := time.Now()
 	year, month, day := date.Date()
 	hour, min, sec := date.Clock()
 	now := fmt.Sprintf("%02d/%02d/%d %02d:%02d:%02d", day, month, year, hour, min, sec)
-	from := "From: maxime.vaude@gmail.com\r\n"
+	from := "From: picsou@scality.com\r\n"
 	to := "To: " + r.to[0] + "\r\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n"
 	subject := fmt.Sprintf("Subject: %s %s\r\n\r\n", r.subject, now)
 	msg := []byte(from + to + mime + subject + "\n" + r.body + "\r\n")
 	addr := "smtp.gmail.com:587"
 
-	if err := smtp.SendMail(addr, *r.auth, "maxime.vaude@gmail.com", r.to, msg); err != nil {
+	if err := smtp.SendMail(addr, *r.auth, "picsou@scality.com", r.to, msg); err != nil {
 		fmt.Println("pb during SendMail: ", err)
 		return nil
 	}
