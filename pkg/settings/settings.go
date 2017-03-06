@@ -12,6 +12,7 @@ type User struct {
 
 type Settings struct {
 	Users []User `yaml:",flow"`
+	Path string `yaml:"path"`
 }
 
 func New(path string) *Settings {

@@ -20,14 +20,13 @@ func getReport() {
 	if err != nil {
 		panic(err)
 	}
-	meta := settings.New("./assets/settings.yml")
-	fmt.Println("parsing settings done: ", meta)
+	meta := settings.New("/usr/local/share/picsou/settings.yml")
 	s := stats.New(sess)
 	templateData := &report.TemplateData{
 		Settings: meta,
 		Data: s,
 	}
-	r := report.NewRequest(&auth, meta.GetUsersEmail(), "AWS Daily Report", "Hello, world!", "./assets/reports/daily.html", templateData).ParseTemplate().SendEmail()
+	r := report.NewRequest(&auth, meta.GetUsersEmail(), "AWS Daily Report", "Hello, world!", meta.Path, templateData).ParseTemplate().SendEmail()
 	if r != nil {
 		fmt.Println("SendEmail Failure: ", err)
 	}
