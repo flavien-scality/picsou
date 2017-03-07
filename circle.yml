@@ -5,7 +5,7 @@ machine:
 
   pre:
     - sudo rm -rf /usr/local/go
-    - curl -L https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
+    - curl -L https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
 
   environment:
     PATH: "/usr/local/go/bin:/usr/local/go_workspace/bin:~/.g /home/ubuntu/.go_project_workspace/bin:${PATH}"
