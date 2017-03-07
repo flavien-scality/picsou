@@ -13,11 +13,27 @@ import (
   "github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-func encryptSecret(name string, value string) (string, error) {
+type KMS struct {
+  KmsARN string
+}
 
-  kmsKeyARN := "arn:aws:kms:us-east-1:012345678910:key/0000000-0000-0000-0000-000000000000"
+type Secret struct {
+  BucketName string
+  Kms *KMS
+  Region string
+}
+
+func New(bucketName, region, kmsARN string) *Secret {
+	k := &KMS{KmsARN: kmsARN}
+	s := &Secret{BucketName: bucketName, Kms: k, Region: region}
+	return s
+}
+
+func (s *Secret) encryptSecret(name string, value string) (string, error) {
+
+  kmsKeyARN := "arn:aws:kms:eu-west-2:944690102204:key/a90a57ac-bb02-496c-a2d9-21e985f3387c "
   kmsClient := kms.New(session.New(&aws.Config{
-    Region: aws.String("us-east-1"),
+    Region: aws.String("eu-west-2"),
   }))
 
   params := &kms.EncryptInput{
@@ -38,10 +54,10 @@ func encryptSecret(name string, value string) (string, error) {
   return name, nil
 }
 
-func uploadSecret(secretFileName string) error {
+func (s *Secret) uploadSecret(secretFileName string) error {
 
   s3Uploader := s3manager.NewUploader(session.New(&aws.Config{
-    Region: aws.String("us-east-1"),
+    Region: aws.String("eu-west-2"),
   }))
 
   reader, err := os.Open(secretFileName)
@@ -51,7 +67,7 @@ func uploadSecret(secretFileName string) error {
   defer reader.Close()
 
   input := &s3manager.UploadInput{
-    Bucket:           aws.String("my-bucket"),
+    Bucket:           aws.String("picsou-data"),
     Key:              aws.String(secretFileName),
     Body:             reader,
   }
@@ -68,10 +84,10 @@ func uploadSecret(secretFileName string) error {
   return nil
 }
 
-func downloadSecret(secretFileName string) (string, error) {
+func (s *Secret) downloadSecret(secretFileName string) (string, error) {
 
   s3Downloader := s3manager.NewDownloader(session.New(&aws.Config{
-    Region: aws.String("us-east-1"),
+    Region: aws.String("eu-west-2"),
   }))
 
   f, err := os.Create(secretName)
@@ -80,7 +96,7 @@ func downloadSecret(secretFileName string) (string, error) {
   }
 
   input := &s3.GetObjectInput{
-    Bucket: aws.String("my-bucket"),
+    Bucket: aws.String("picsou-data"),
     Key:    aws.String(secretFileName),
   }
   _, err = s3Downloader.Download(f, input)
@@ -91,7 +107,7 @@ func downloadSecret(secretFileName string) (string, error) {
   return f.Name(), nil
 }
 
-func decryptSecretFile(secretFile string) (string, error) {
+func (s *Secret) decryptSecretFile(secretFile string) (string, error) {
 
   secretBytes, err := ioutil.ReadFile(secretFile)
   if err != nil {
@@ -99,7 +115,7 @@ func decryptSecretFile(secretFile string) (string, error) {
   }
 
   kmsClient := kms.New(session.New(&aws.Config{
-    Region: aws.String("us-east-1"),
+    Region: aws.String("us-west-2"),
   }))
 
   params := &kms.DecryptInput{
