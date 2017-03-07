@@ -5,13 +5,13 @@ JQ="jq --raw-output --exit-status"
 
 configure_aws_cli(){
 	aws --version
-	aws configure set default.region us-west-1
+	aws configure set default.region eu-west-2
 	aws configure set default.output json
 }
 
 deploy_cluster() {
 
-    family="picsou-task-family"
+    family="picsou-reporter-task"
 
     make_task_def
     register_definition
@@ -42,7 +42,7 @@ make_task_def(){
 	task_template='[
 		{
 			"name": "picsou",
-			"image": "%s.dkr.ecr.eu-west-1.amazonaws.com/picsou:%s",
+			"image": "%s.dkr.ecr.eu-west-2.amazonaws.com/picsou:%s",
 			"essential": true,
 			"memory": 200,
 			"cpu": 10,
