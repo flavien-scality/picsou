@@ -23,7 +23,7 @@ $ make docker-build
 #### Local
 
 ```
-$ ./picsou
+$ ./picsou report
 ```
 
 #### Docker
