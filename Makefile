@@ -1,6 +1,7 @@
 BINARIES ?=	picsou
-GODIR ?= $GOPATH/src/github.com/scality/picsou
+GODIR ?= $(shell echo $$GOPATH)/src/github.com/scality/picsou
 
+GOFLAGS ?= GOOS=linux GOARCH=amd64 CGO_ENABLED=0
 PKG_BASE_DIR ?=	./pkg
 CONVEY_PORT ?=	9042
 SOURCES :=	$(shell find . -type f -name "*.go")
@@ -10,7 +11,7 @@ PACKAGES :=	$(shell go list ./pkg/...)
 GO ?=		$(GOENV) go
 
 
-all:	deps build
+all:	build
 
 
 .PHONY: build
@@ -18,8 +19,9 @@ build:	$(BINARIES)
 
 
 $(BINARIES):	$(SOURCES)
-	$(GO) build -v ./...
-	$(GO) build -o $@ ./cmd/$@
+	$(GOFLAGS) $(GO) get ./...
+	$(GOFLAGS) $(GO) build -v ./...
+	$(GOFLAGS) $(GO) build -o $@ ./cmd/$@
 
 
 .PHONY: lint
@@ -34,7 +36,8 @@ test: deps
 
 .PHONY: deps
 deps:
-	$(GO) get -d -t -v ./...
+	pip install -r requirements.txt
+	$(GO) get -t ./...
 
 
 .PHONY: install
@@ -60,6 +63,11 @@ convey:
 .PHONY:	cover
 cover:	profile.txt
 	$(GO) tool cover -html=coverage.txt -o coverage.html
+
+
+.PHONY: docker-build
+docker-build:
+	docker run --rm -v "$(shell echo $$HOME)/.ssh:/root/.ssh" -v "$(shell echo $$PWD)":/go/src/github.com/scality/picsou -w /go/src/github.com/scality/picsou golang:1.8.0-onbuild bash -c make
 
 
 profile.txt:	$(SOURCES)
