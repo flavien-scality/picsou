@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x -e -o pipefail
+
 # more bash-friendly output for jq
 JQ="jq --raw-output --exit-status"
 
@@ -56,7 +58,7 @@ make_task_def(){
 
 push_ecr_image(){
 	eval $(aws ecr get-login --region eu-west-1)
-	docker push $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/go-picsou:$CIRCLE_SHA1
+	docker push $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/picsou:$CIRCLE_SHA1
 }
 
 register_definition() {
