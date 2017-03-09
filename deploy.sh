@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x -e -o pipefail
+set -e -o pipefail
 
 # more bash-friendly output for jq
 JQ="jq --raw-output --exit-status"

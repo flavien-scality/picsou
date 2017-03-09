@@ -27,7 +27,7 @@ dependencies:
 
   post:
     - cd $WORKDIR && make docker-build
-    - cd $WORKDIR && docker build -t $AWS_ACCOUND_ID.dkr.ecr.us-west-1.amazonaws.com/picsou:$CIRCLE_SHA1 -f $WORKDIR/Dockerfile .
+    - cd $WORKDIR && docker build -t $AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/picsou:$CIRCLE_SHA1 -f $WORKDIR/Dockerfile .
 
 
 test:
