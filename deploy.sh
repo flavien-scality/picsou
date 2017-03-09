@@ -57,8 +57,8 @@ make_task_def(){
 }
 
 push_ecr_image(){
-	eval $(aws ecr get-login --region eu-west-1)
-	docker push $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/picsou:$CIRCLE_SHA1
+	eval $(aws ecr get-login --region eu-west-2)
+	docker push $AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/picsou:$CIRCLE_SHA1
 }
 
 register_definition() {
