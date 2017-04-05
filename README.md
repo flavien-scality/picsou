@@ -1,3 +1,9 @@
+# AWS architecture
+
+Here is the design of the final aws cloud solution to handle our different use cases in the cloud.
+
+![AWS Architecture](https://github.com/scality/picsou/docs/aws-architecture.png)
+
 # Picsou
 
 [![Circle CI](http://ci.ironmann.io/gh/scality/picsou.svg?style=svg)](http://ci.ironmann.io/gh/scality/picsou)
