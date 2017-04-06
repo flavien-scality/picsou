@@ -2,7 +2,7 @@
 
 Here is the design of the final aws cloud solution to handle our different use cases in the cloud.
 
-![AWS Architecture](https://github.com/scality/picsou/docs/aws-architecture.png)
+![AWS Architecture](https://github.com/scality/picsou/master/docs/aws-architecture.png)
 
 # Picsou
 
