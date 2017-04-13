@@ -37,6 +37,7 @@ def get_orphan_sgs():
     ec2_r = boto3.resource("ec2")
     sgs = ec2.describe_security_groups(DryRun=False)
     for sg in sgs["SecurityGroups"]:
+        logger.debug("security group: {}".format(sg))
         if any(group_id not in sg["GroupId"] for group_id in list(get_linked_sgs())):
             yield ec2_r.SecurityGroup(sg["GroupId"])
     return
@@ -48,7 +49,8 @@ def handle(event, context):
     Lambda handler
     """
     logger.info("event: {} | context {}".format(event, context))
-    count = 1
+    count = 0
+    err = 0
     for orphan in get_orphan_sgs():
         logger.info("Orphan sg {} to delete: {}".format(count, orphan))
         try:
@@ -56,5 +58,6 @@ def handle(event, context):
             logger.info("Orphan sg {} deleted".format(count))
             count += 1
         except Exception as e:
-            logger.warning("Could not delete orphan sg: {}".format(orphan.group_id))
-    logger.info("number of orphan volumes deleted: {}".format(count))
+            logger.warning("err {}: Could not delete orphan sg: {}".format(err, orphan.group_id))
+            err += 1
+    logger.info("number of orphan volumes deleted: {}, number of orphan volumes which could not be deleted: {}".format(count, err))
