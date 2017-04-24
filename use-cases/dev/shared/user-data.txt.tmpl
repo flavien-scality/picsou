@@ -1,0 +1,13 @@
+#!/bin/bash
+
+mkdir -p /home/ubuntu/.ssh
+cat <<FILE > /home/ubuntu/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCnaBRy9BkfDPJNa8eWRj4gXy70BVul3NMUerB7Yac6Yh+sAnCac90OTMBGxDNLvmCAgconNd77KfF8Kmqpg0mFH+zUnT4mos2B0Kg5l3oqrq9lHBMOPdlGCsJaIlKFjswGYB6vL6CPuoVvwL2GlsT2UWxJZGUsfD4c/7yGAY6GumRP0GWRR2lWMVLnvQ6UxUoePjRX63rN69hi6hF5lCOqypeg2TuEF7R9q8nRL4SVzhMSCmCF8Czu2zq+od0+o+bjVqJZEgrnOr/fAzaSlYVitEgSepr7QIu0ShyyDewosZJAn128HrjoVJjYkaBnkF3acDM+bTwUbo82l/zFHVGl maxter@maxime-scality
+FILE
+
+chown ubuntu.ubuntu /home/ubuntu/.ssh/authorized_keys
+chmod 400 /home/ubuntu/.ssh/authorized_keys
+
+apt-get install aws-cli -y
+
+aws s3 cp s3://mvaude-dev/bootstrap-scripts/dev_script.sh /tmp && sh /tmp/dev_script.sh
