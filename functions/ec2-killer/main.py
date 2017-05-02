@@ -15,6 +15,8 @@ logger.setLevel(logging.INFO)
 
 ZERO = datetime.timedelta(0)
 
+EXPIRATION_TIME = 28800
+
 class UTC(datetime.tzinfo):
   def utcoffset(self, dt):
     return ZERO
@@ -61,31 +63,38 @@ def get_victims():
         yield ec2_r.Instance(instance)
     return
 
-def main():
+def main(DryRun=True):
     """
     Main function
+
+    :param DryRun: Disable instances killing
+    :type DryRun: boolean
     """
     count = 0
     err = 0
     for victim in get_victims():
-        logger.info("Victim {} to delete: {}".format(count, victim))
+        logger.info("Victim {} to kill: {}".format(count, victim))
         uptime = datetime.datetime.now(UTC()) - victim.launch_time
-        try:
-            # victim.delete()
-            logger.info("instance launch deltatime: {}".format(uptime))
-            logger.info("Victim {} deleted".format(count))
-            count += 1
-        except Exception as e:
-            logger.warning("Err {}: Could not delete victim: {}".format(err, victim.instance_id))
-            err += 1
-    logger.info("number of victim instances deleted: {}, number of victim instances which could not be deleted: {}".format(count, err))
+        uptime = uptime.seconds
+        if uptime > EXPIRATION_TIME:
+            try:
+                victim.terminate(DryRun=DryRun)
+                logger.info("instance launch deltatime: {}".format(uptime))
+                logger.info("Victim {} killed".format(count))
+                count += 1
+            except Exception as e:
+                logger.warning("Err {}: Could not kill victim: {}".format(e, victim.instance_id))
+                err += 1
+        else:
+            logger.info("instance too young to be killed")
+    logger.info("number of victim instances killed: {}, number of victim instances which could not be killed: {}".format(count, err))
 
 def handle(event, context):
     """
     Lambda handler
     """
     logger.info("event: {} | context {}".format(event, context))
-    main()
+    main(DryRun=False)
 
 if __name__ == "__main__":
-    main()
+    main(DryRun=True)
