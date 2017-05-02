@@ -4,10 +4,29 @@ Lambda to kill EBS victims on all AWS regions
 
 import boto3
 
+import datetime
+import json
 import logging
+import time
 
+logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+ZERO = datetime.timedelta(0)
+
+class UTC(datetime.tzinfo):
+  def utcoffset(self, dt):
+    return ZERO
+  def tzname(self, dt):
+    return "UTC"
+  def dst(self, dt):
+    return ZERO
+
+def datetime_handler(x):
+    if isinstance(x, datetime.datetime):
+        return x.isoformat()
+    raise TypeError("Unknown type")
 
 def get_instances():
     """
@@ -22,6 +41,7 @@ def get_instances():
     instances_list = ec2.describe_instances(DryRun=False)
     for reservation in instances_list["Reservations"]:
         for instance in reservation["Instances"]:
+                logger.debug("victim metadatas: {}".format(json.dumps(instance, indent=4, sort_keys=True, default=datetime_handler)))
                 yield instance["InstanceId"]
     return
 
@@ -41,16 +61,18 @@ def get_victims():
         yield ec2_r.Instance(instance)
     return
 
-def main()
+def main():
     """
     Main function
     """
     count = 0
     err = 0
-    for victim in get_victim():
+    for victim in get_victims():
         logger.info("Victim {} to delete: {}".format(count, victim))
+        uptime = datetime.datetime.now(UTC()) - victim.launch_time
         try:
             # victim.delete()
+            logger.info("instance launch deltatime: {}".format(uptime))
             logger.info("Victim {} deleted".format(count))
             count += 1
         except Exception as e:
@@ -63,4 +85,7 @@ def handle(event, context):
     Lambda handler
     """
     logger.info("event: {} | context {}".format(event, context))
+    main()
+
+if __name__ == "__main__":
     main()
