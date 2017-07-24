@@ -1,5 +1,5 @@
 """
-Lambda to kill EBS victims on all AWS regions
+Lambda to get best price for an ec2 instance filling specific conditions
 """
 
 import boto3
@@ -13,7 +13,8 @@ import urllib2
 
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+log_level = os.getenv("LOG_LEVEL", logging.INFO)
+logger.setLevel(log_level)
 
 def datetime_handler(x):
     if isinstance(x, datetime.datetime):
@@ -76,24 +77,14 @@ def get_price(DryRun=True, event=None):
     # print("\n\nPrices: {}".format(json.dumps(prices["terms"], indent=4)))
     # print("\n\nPrices: {}".format(prices["terms"]["OnDemand"].keys()))
 
-def main(DryRun=True, event=None):
-    """
-    Main function
-
-    :param DryRun: Disable instances killing
-    :type DryRun: boolean
-    :param event: event containing metadatas for query
-    :type event: dict
-    """
-    return get_price(DryRun=DryRun, event=event)
-    # logger.info("prices history parsed")
 
 def handle(event, context):
     """
     Lambda handler
     """
     # logger.info("event: {} | context {}".format(event, context))
-    return main(DryRun=False, event=event)
+    return get_price(DryRun=False, event=event)
+
 
 if __name__ == "__main__":
     today = datetime.now()
@@ -111,4 +102,4 @@ if __name__ == "__main__":
         "EndTime": today,
         "InstanceTypes": [ "c4.xlarge" ],
     }
-    main(DryRun=False, event=event)
+    get_price(DryRun=False, event=event)
