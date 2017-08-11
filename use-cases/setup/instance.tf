@@ -13,5 +13,16 @@ resource "aws_instance" "setup-dev" {
     Team = "setup"
     Spawner = "terraform"
   }
-  user_data = "${file("shared/user-data.txt")}"
+  user_data = "${file("shared/cloud-config.txt")}"
+
+  provisioner "remote-exec" {
+    inline = [
+      "while [ ! -f /tmp/signal ]; do sleep 2; done",
+    ]
+    connection {
+      type = "ssh"
+      user = "ubuntu"
+      private_key = "${file("${pathexpand("~/.ssh/id_rsa")}")}"
+    }
+  }
 }
