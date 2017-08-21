@@ -1,0 +1,86 @@
+#cloud-config
+
+# Add apt repositories
+#
+# Default: auto select based on cloud metadata
+#  in ec2, the default is <region>.archive.ubuntu.com
+# apt:
+#   primary:
+#     - arches [default]
+#       uri:
+#     use the provided mirror
+#       search:
+#     search the list for the first mirror.
+#     this is currently very limited, only verifying that
+#     the mirror is dns resolvable or an IP address
+#
+# if neither mirror is set (the default)
+# then use the mirror provided by the DataSource found.
+# In EC2, that means using <region>.ec2.archive.ubuntu.com
+#
+# if no mirror is provided by the DataSource, but 'search_dns' is
+# true, then search for dns names '<distro>-mirror' in each of
+# - fqdn of this host per cloud metadata
+# - localdomain
+# - no domain (which would search domains listed in /etc/resolv.conf)
+# If there is a dns entry for <distro>-mirror, then it is assumed that there
+# is a distro mirror at http://<distro>-mirror.<domain>/<distro>
+#
+# That gives the cloud provider the opportunity to set mirrors of a distro
+# up and expose them only by creating dns entries.
+#
+# if none of that is found, then the default distro mirror is used
+apt:
+  preserve_sources_list: true
+  sources:
+    docker_ce.list:
+      # 2.1 source
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
+      # 2.2 keyid
+      keyserver: p80.pool.sks-keyservers.net
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+  # Any apt config string that will be made available to apt
+  # see the APT.CONF(5) man page for details what can be specified
+  conf: | # APT config
+    APT {
+      Get {
+        Assume-Yes "true";
+        Fix-Broken "true";
+      };
+    };
+
+
+# Update apt database on first boot (run 'apt-get update').
+# Note, if packages are given, or package_upgrade is true, then
+# update will be done independent of this setting.
+#
+# Default: false
+# Aliases: apt_update
+package_update: false
+
+
+# Upgrade the instance on first boot
+# (ie run apt-get upgrade)
+#
+# Default: false
+# Aliases: apt_upgrade
+package_upgrade: true
+
+
+# add each entry to ~/.ssh/authorized_keys for the configured user or the
+# first user defined in the user definition directive.
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDRV5aIX01LMNmZdA2Wo7f/101w+zUplv1UwMfcvXnLKdGGrykNYYyXTClvXPUvyys5cty3OYX4C1f8L1iRe2iamp4I0S8zVo7368zFDFM4fiKQ88yu1oayIsBd75Yga6zSJPpg18yMk9JT6GJyB2ZX/MZtAwKeFFq2es1V2J4uMdIlecfREVjQYNahah1GCCKLpMlciWMml4B/LR8IzFxuSMEsVRykoBu7Yg06n5gcmh+FOJg0HvZh9zP1c00Szu2gVuF7RjRvwjnQYlYb1cdWtKUUsQp9OxzlnmU5tuwAhGhR8/fPaIi/jbZ0fHGZGcoA27ro/+K3GgnlQFROBBNh antonincoulibaly@Antonins-MacBook-Pro.local
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCirFu6+wuvTP1LNjxQGLJrxFNWooE9ovL2ZiGkP610qEPUTnIZGXORPtOmEEgqcW6nJpihAxl5a0m8ygRrhQ5kP4FrebCwKOHL9bCFhvc9tFJ21SsYqQWV11DDUOSQ3nBOTzCBgSx6e10aEhN5IS3O8JPWNrEHVpxTucQnfRgPyhSKXxd8UpAGwBa28ZW9gyRH5NDbh0Q24vXZ7Y616Iki9x5IrxVbkkfhnSPYu5+UnGYinH0KtISdPh1S6CfzkpiYutnk5itd50e2h77gUEWmZnab+S/r+WLvuJz9MdgDF1GpedZMP00xIDs6DMjzbM0zBHkzgQxKZaOUigg8UA7p alxf
+
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+  - docker-ce
+
+runcmd:
+  - usermod -G docker ubuntu
+  - touch /tmp/signal
