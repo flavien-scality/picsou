@@ -67,7 +67,7 @@ cover:	profile.txt
 
 .PHONY: docker-build
 docker-build:
-	docker run --rm -v "$(shell echo $$HOME)/.ssh:/root/.ssh" -v "$(shell echo $$PWD)":/go/src/github.com/scality/picsou -w /go/src/github.com/scality/picsou golang:1.8.0-onbuild bash -c make
+	docker run --rm -v "$(shell echo $$HOME)/.ssh:/root/.ssh" -v "$(shell echo $$PWD)":/go/src/github.com/scality/picsou -w /go/src/github.com/scality/picsou golang:1.8-onbuild bash -c make
 
 
 profile.txt:	$(SOURCES)
