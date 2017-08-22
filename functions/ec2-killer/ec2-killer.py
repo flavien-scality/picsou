@@ -89,7 +89,7 @@ def main(DryRun=True):
             logger.info("instance too young to be killed")
     logger.info("number of victim instances killed: {}, number of victim instances which could not be killed: {}".format(count, err))
 
-def handle(event, context):
+def handler(event, context):
     """
     Lambda handler
     """
