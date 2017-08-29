@@ -1,2 +1,7 @@
 coverage.*
 picsou
+*.backup
+*.zip
+*.tfstate
+*.swp
+venv
