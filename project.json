@@ -1,5 +1,0 @@
-{
-  "name": "python",
-  "description": "AWS architecture management utils",
-  "role": "arn:aws:iam::944690102204:role/picsou_lambdas_lambda_function"
-}
