@@ -46,4 +46,5 @@ deployment:
   prod:
     branch: master
     commands:
-      - ./deploy.sh
+      - pip install invoke
+      - invoke deploy
