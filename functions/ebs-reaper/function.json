@@ -1,6 +1,0 @@
-{
-  "description": "ebs-orphan-killer",
-  "hooks": {
-    "build": "/usr/bin/env pip install -r requirements.txt -t ."
-  }
-}
