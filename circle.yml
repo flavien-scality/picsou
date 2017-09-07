@@ -4,9 +4,9 @@ machine:
     - docker
 
   pre:
-    - sudo rm -rf /usr/local/go
+    - sudo rm -rf /usr/local/bin/go /usr/local/go
     - curl -L https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
-    - curl -L https://releases.hashicorp.com/terraform/0.10.4/terraform_0.10.4_linux_amd64.zip | sudo bsdtar -xvf- -C /usr/local
+    - curl -L https://releases.hashicorp.com/terraform/0.10.4/terraform_0.10.4_linux_amd64.zip | sudo bsdtar -xvf- -C /usr/local/bin
 
   environment:
     PATH: "/usr/local/go/bin:/usr/local/go_workspace/bin:~/.g /home/ubuntu/.go_project_workspace/bin:${PATH}"
@@ -23,7 +23,7 @@ machine:
 dependencies:
 
   override:
-    - terraform
+    - terraform --version
     - cd $WORKDIR && make deps
     - go get -u github.com/golang/lint/golint
 
