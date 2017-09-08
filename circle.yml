@@ -4,14 +4,22 @@ machine:
     - docker
 
   pre:
+    - gpg --keyserver keyserver.ubuntu.com --recv-keys 6B73A36E6026DFCA
+    - gpg --keyserver keyserver.ubuntu.com --recv-keys 1397BC53640DB551
+    - gpg --export --armor 6B73A36E6026DFCA | sudo apt-key add -
+    - gpg --export --armor 1397BC53640DB551 | sudo apt-key add -
     - sudo rm -rf /usr/local/bin/go /usr/local/go
     - curl -L https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar xvzf - -C /usr/local
     - curl -L https://releases.hashicorp.com/terraform/0.10.4/terraform_0.10.4_linux_amd64.zip | sudo bsdtar -xvf- -C /usr/local/bin
+    - sudo add-apt-repository -y ppa:jonathonf/python-3.6
+    - sudo apt-get update
+    - sudo apt-get install -y python3.6
+
 
   environment:
     PATH: "/usr/local/go/bin:/usr/local/go_workspace/bin:~/.g /home/ubuntu/.go_project_workspace/bin:${PATH}"
     GOPATH: "${HOME}/go"
-    SOURCES: $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME 
+    SOURCES: $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
     WORKDIR: $SOURCES/$CIRCLE_PROJECT_REPONAME
 
   post:
@@ -26,6 +34,7 @@ dependencies:
     - terraform --version
     - cd $WORKDIR && make deps
     - go get -u github.com/golang/lint/golint
+    - sudo pip install invoke
 
   post:
     - cd $WORKDIR && make docker-build
@@ -37,6 +46,7 @@ test:
   override:
     - cd $WORKDIR && make lint
     - cd $WORKDIR && make cover
+    - invoke test
 
   post:
     - mkdir $CIRCLE_ARTIFACTS/coverage
