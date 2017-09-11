@@ -39,7 +39,7 @@ dependencies:
 test:
 
   override:
-    - PATH=$PATH:~/go/bin cd $WORKDIR && make lint
+    - cd $WORKDIR && ~/go/bin/golint ./...
     - cd $WORKDIR && make cover
     - invoke test
 
