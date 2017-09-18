@@ -10,8 +10,7 @@ resource "aws_iam_role" "iam_for_sg_reaper" {
       "Principal": {
         "Service": "lambda.amazonaws.com"
       },
-      "Effect": "Allow",
-      "Sid": ""
+      "Effect": "Allow"
     }
   ]
 }

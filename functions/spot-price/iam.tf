@@ -10,8 +10,7 @@ resource "aws_iam_role" "spot-prices-role" {
       "Principal": {
         "Service": "lambda.amazonaws.com"
       },
-      "Effect": "Allow",
-      "Sid": ""
+      "Effect": "Allow"
     }
   ]
 }

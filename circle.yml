@@ -18,7 +18,7 @@ machine:
     - mkdir -p $GOPATH
     - mkdir -p $WORKDIR
     - cp -r $HOME/$CIRCLE_PROJECT_REPONAME $SOURCES
-    - cd /home/ubuntu/.pyenv/plugins/python-build/../.. && git pull && cd -
+    - cd /home/ubuntu/.pyenv && git pull && cd -
     - pyenv install 3.6.2
     - pyenv global 2.7.10 3.6.2
 
@@ -53,5 +53,4 @@ deployment:
   prod:
     branch: master
     commands:
-      - pip install invoke
       - invoke deploy

@@ -10,8 +10,7 @@ resource "aws_iam_role" "iam_for_ec2_killer" {
       "Principal": {
         "Service": "lambda.amazonaws.com"
       },
-      "Effect": "Allow",
-      "Sid": ""
+      "Effect": "Allow"
     }
   ]
 }
