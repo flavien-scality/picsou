@@ -17,11 +17,11 @@ resource "aws_iam_role" "iam_for_ebs_reaper" {
 EOF
 }
 
-data "aws_iam_policy_document" "ebs-reaper-access" {
+data "aws_iam_policy_document" "ebs_reaper_access" {
   statement {
     actions = [
-      "ec2:TerminateInstances",
-      "ec2:DescribeInstances",
+      "ec2:DeleteVolume",
+      "ec2:DescribeVolumes",
     ]
     resources = [
       "*",
@@ -29,19 +29,19 @@ data "aws_iam_policy_document" "ebs-reaper-access" {
   }
 }
 
-resource "aws_iam_policy" "ebs-reaper-access" {
-  name = "ebs-reaper-access"
-  policy = "${data.aws_iam_policy_document.ebs-reaper-access.json}"
+resource "aws_iam_policy" "ebs_reaper_access" {
+  name = "ebs_reaper_access"
+  policy = "${data.aws_iam_policy_document.ebs_reaper_access.json}"
 }
 
-resource "aws_iam_policy_attachment" "ebs-reaper-access" {
-  name = "ebs-reaper-access"
+resource "aws_iam_policy_attachment" "ebs_reaper_access" {
+  name = "ebs_reaper_access"
   roles = ["${aws_iam_role.iam_for_ebs_reaper.name}"]
-  policy_arn = "${aws_iam_policy.ebs-reaper-access.arn}"
+  policy_arn = "${aws_iam_policy.ebs_reaper_access.arn}"
 }
 
-resource "aws_iam_policy_attachment" "basic-exec-role" {
-  name = "basic-exec-role"
+resource "aws_iam_policy_attachment" "basic_exec_role" {
+  name = "basic_exec_role"
   roles = ["${aws_iam_role.iam_for_ebs_reaper.name}"]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

@@ -17,11 +17,12 @@ resource "aws_iam_role" "iam_for_sg_reaper" {
 EOF
 }
 
-data "aws_iam_policy_document" "sg-reaper-access" {
+data "aws_iam_policy_document" "sg_reaper_access" {
   statement {
     actions = [
-      "ec2:TerminateInstances",
       "ec2:DescribeInstances",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DeleteSecurityGroups",
     ]
     resources = [
       "*",
@@ -29,19 +30,19 @@ data "aws_iam_policy_document" "sg-reaper-access" {
   }
 }
 
-resource "aws_iam_policy" "sg-reaper-access" {
-  name = "sg-reaper-access"
-  policy = "${data.aws_iam_policy_document.sg-reaper-access.json}"
+resource "aws_iam_policy" "sg_reaper_access" {
+  name = "sg_reaper_access"
+  policy = "${data.aws_iam_policy_document.sg_reaper_access.json}"
 }
 
-resource "aws_iam_policy_attachment" "sg-reaper-access" {
-  name = "sg-reaper-access"
+resource "aws_iam_policy_attachment" "sg_reaper_access" {
+  name = "sg_reaper_access"
   roles = ["${aws_iam_role.iam_for_sg_reaper.name}"]
-  policy_arn = "${aws_iam_policy.sg-reaper-access.arn}"
+  policy_arn = "${aws_iam_policy.sg_reaper_access.arn}"
 }
 
-resource "aws_iam_policy_attachment" "basic-exec-role" {
-  name = "basic-exec-role"
+resource "aws_iam_policy_attachment" "basic_exec_role" {
+  name = "basic_exec_role"
   roles = ["${aws_iam_role.iam_for_sg_reaper.name}"]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

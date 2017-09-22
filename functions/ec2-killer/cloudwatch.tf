@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_event_rule" "everyday" {
   name = "everyday"
-  schedule_expression = "rate(5 minutes)"
+  schedule_expression = "rate(3600 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "ec2_killer_everyday" {

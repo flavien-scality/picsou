@@ -1,5 +1,5 @@
-resource "aws_iam_role" "spot-prices-role" {
-  name = "spot-prices-role"
+resource "aws_iam_role" "spot_prices_role" {
+  name = "spot_prices_role"
 
   assume_role_policy = <<EOF
 {
@@ -17,7 +17,7 @@ resource "aws_iam_role" "spot-prices-role" {
 EOF
 }
 
-data "aws_iam_policy_document" "spot-prices-access" {
+data "aws_iam_policy_document" "spot_prices_access" {
   statement {
     actions = [
       "ec2:DescribeSpotPriceHistory",
@@ -28,17 +28,17 @@ data "aws_iam_policy_document" "spot-prices-access" {
   }
 }
 
-resource "aws_iam_policy" "spot-prices-access" {
-  name = "spot-prices-access"
-  policy = "${data.aws_iam_policy_document.spot-prices-access.json}"
+resource "aws_iam_policy" "spot_prices_access" {
+  name = "spot_prices_access"
+  policy = "${data.aws_iam_policy_document.spot_prices_access.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "spot-prices-access" {
-  role = "${aws_iam_role.spot-prices-role.name}"
-  policy_arn = "${aws_iam_policy.spot-prices-access.arn}"
+resource "aws_iam_role_policy_attachment" "spot_prices_access" {
+  role = "${aws_iam_role.spot_prices_role.name}"
+  policy_arn = "${aws_iam_policy.spot_prices_access.arn}"
 }
 
-resource "aws_iam_role_policy_attachment" "basic-exec-role" {
-  role = "${aws_iam_role.spot-prices-role.name}"
+resource "aws_iam_role_policy_attachment" "basic_exec_role" {
+  role = "${aws_iam_role.spot_prices_role.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
