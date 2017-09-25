@@ -3,8 +3,8 @@ resource "aws_cloudwatch_event_rule" "everyday" {
   schedule_expression = "rate(3600 minutes)"
 }
 
-resource "aws_cloudwatch_event_target" "ec2_killer_everyday" {
+resource "aws_cloudwatch_event_target" "sg_reaper_everyday" {
   rule = "${aws_cloudwatch_event_rule.everyday.name}"
-  target_id = "ec2-killer"
-  arn = "${aws_lambda_function.ec2_killer.arn}"
+  target_id = "sg_reaper"
+  arn = "${aws_lambda_function.sg_reaper.arn}"
 }

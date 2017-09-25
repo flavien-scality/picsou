@@ -74,8 +74,7 @@ def main(DryRun=True):
     err = 0
     for victim in get_victims():
         logger.info("Victim {} to kill: {}".format(count, victim))
-        uptime = datetime.datetime.now(UTC()) - victim.launch_time
-        uptime = uptime.seconds
+        uptime = (datetime.datetime.now(UTC()) - victim.launch_time).total_seconds()
         if uptime > EXPIRATION_TIME:
             try:
                 victim.terminate(DryRun=DryRun)
@@ -86,10 +85,10 @@ def main(DryRun=True):
                 logger.warning("Err {}: Could not kill victim: {}".format(e, victim.instance_id))
                 err += 1
         else:
-            logger.info("instance too young to be killed")
+            logger.info("instance too young to be killed: uptime: {}".format(uptime))
     logger.info("number of victim instances killed: {}, number of victim instances which could not be killed: {}".format(count, err))
 
-def handle(event, context):
+def handler(event, context):
     """
     Lambda handler
     """

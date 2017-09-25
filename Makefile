@@ -42,7 +42,7 @@ deps:
 
 .PHONY: install
 install:
-	$(GO) install $(COMMANDS) 
+	$(GO) install $(COMMANDS)
 
 
 .PHONY: clean
