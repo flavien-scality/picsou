@@ -17,7 +17,7 @@ resource "aws_iam_role" "iam_for_ebs_reaper" {
 EOF
 }
 
-data "aws_iam_policy_document" "ebs_reaper_access" {
+data "aws_iam_policy_document" "ebs_reaper_access_document" {
   statement {
     actions = [
       "ec2:DeleteVolume",
@@ -29,15 +29,15 @@ data "aws_iam_policy_document" "ebs_reaper_access" {
   }
 }
 
-resource "aws_iam_policy" "ebs_reaper_access" {
-  name = "ebs_reaper_access"
-  policy = "${data.aws_iam_policy_document.ebs_reaper_access.json}"
+resource "aws_iam_policy" "ebs_reaper_access_policy" {
+  name = "ebs_reaper_access_policy"
+  policy = "${data.aws_iam_policy_document.ebs_reaper_access_document.json}"
 }
 
-resource "aws_iam_policy_attachment" "ebs_reaper_access" {
-  name = "ebs_reaper_access"
+resource "aws_iam_policy_attachment" "ebs_reaper_access_attach" {
+  name = "ebs_reaper_access_attach"
   roles = ["${aws_iam_role.iam_for_ebs_reaper.name}"]
-  policy_arn = "${aws_iam_policy.ebs_reaper_access.arn}"
+  policy_arn = "${aws_iam_policy.ebs_reaper_access_policy.arn}"
 }
 
 resource "aws_iam_policy_attachment" "basic_exec_role" {

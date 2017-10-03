@@ -17,7 +17,7 @@ resource "aws_iam_role" "spot_prices_role" {
 EOF
 }
 
-data "aws_iam_policy_document" "spot_prices_access" {
+data "aws_iam_policy_document" "spot_prices_access_doc" {
   statement {
     actions = [
       "ec2:DescribeSpotPriceHistory",
@@ -28,14 +28,14 @@ data "aws_iam_policy_document" "spot_prices_access" {
   }
 }
 
-resource "aws_iam_policy" "spot_prices_access" {
-  name = "spot_prices_access"
-  policy = "${data.aws_iam_policy_document.spot_prices_access.json}"
+resource "aws_iam_policy" "spot_prices_access_policy" {
+  name = "spot_prices_access_policy"
+  policy = "${data.aws_iam_policy_document.spot_prices_access_doc.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "spot_prices_access" {
+resource "aws_iam_role_policy_attachment" "spot_prices_access_attach" {
   role = "${aws_iam_role.spot_prices_role.name}"
-  policy_arn = "${aws_iam_policy.spot_prices_access.arn}"
+  policy_arn = "${aws_iam_policy.spot_prices_access_policy.arn}"
 }
 
 resource "aws_iam_role_policy_attachment" "basic_exec_role" {

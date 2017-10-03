@@ -17,7 +17,7 @@ resource "aws_iam_role" "iam_for_ec2_killer" {
 EOF
 }
 
-data "aws_iam_policy_document" "ec2_killer_access" {
+data "aws_iam_policy_document" "ec2_killer_access_document" {
   statement {
     actions = [
       "ec2:TerminateInstances",
@@ -29,15 +29,15 @@ data "aws_iam_policy_document" "ec2_killer_access" {
   }
 }
 
-resource "aws_iam_policy" "ec2_killer_access" {
-  name = "ec2_killer_access"
-  policy = "${data.aws_iam_policy_document.ec2_killer_access.json}"
+resource "aws_iam_policy" "ec2_killer_access_policy" {
+  name = "ec2_killer_access_policy"
+  policy = "${data.aws_iam_policy_document.ec2_killer_access_document.json}"
 }
 
-resource "aws_iam_policy_attachment" "ec2_killer_access" {
-  name = "ec2_killer_access"
+resource "aws_iam_policy_attachment" "ec2_killer_access_attach" {
+  name = "ec2_killer_access_attach"
   roles = ["${aws_iam_role.iam_for_ec2_killer.name}"]
-  policy_arn = "${aws_iam_policy.ec2_killer_access.arn}"
+  policy_arn = "${aws_iam_policy.ec2_killer_access_policy.arn}"
 }
 
 resource "aws_iam_policy_attachment" "basic_exec_role" {

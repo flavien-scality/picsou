@@ -5,3 +5,4 @@ picsou
 *.tfstate
 *.swp
 venv
+.terraform

@@ -10,7 +10,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_ec2_killer" {
     action = "lambda:InvokeFunction"
     function_name = "${aws_lambda_function.ec2_killer.function_name}"
     principal = "events.amazonaws.com"
-    source_arn = "${aws_cloudwatch_event_rule.everyday.arn}"
+    source_arn = "${aws_cloudwatch_event_rule.ec2_killer_everyday.arn}"
 }
 
 resource "aws_lambda_function" "ec2_killer" {
