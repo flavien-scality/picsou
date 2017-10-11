@@ -15,7 +15,7 @@ logger.setLevel(logging.INFO)
 
 ZERO = datetime.timedelta(0)
 
-EXPIRATION_TIME = 28800
+EXPIRATION_TIME = 60
 
 class UTC(datetime.tzinfo):
   def utcoffset(self, dt):
